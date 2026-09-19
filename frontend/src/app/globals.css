@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  /* Minimal B&W Architectural Design System */
+  --background: #ffffff;
+  --foreground: #09090b;
+  
+  --surface: #fafafa;
+  --surface-hover: #f4f4f5;
+  --surface-active: #e4e4e7;
+  
+  --border: #e4e4e7;
+  --border-subtle: #f4f4f5;
+  --border-strong: #09090b;
+  
+  --primary: #09090b;
+  --primary-foreground: #ffffff;
+  
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  
+  --accent: #09090b;
+  --accent-foreground: #ffffff;
+
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --card-border: #e4e4e7;
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  
+  --surface: #121215;
+  --surface-hover: #18181b;
+  --surface-active: #27272a;
+  
+  --border: #27272a;
+  --border-subtle: #18181b;
+  --border-strong: #fafafa;
+  
+  --primary: #fafafa;
+  --primary-foreground: #09090b;
+  
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  
+  --accent: #fafafa;
+  --accent-foreground: #09090b;
+
+  --card: #121215;
+  --card-foreground: #f4f4f5;
+  --card-border: #27272a;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for sleek minimalist interface */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.45);
+}

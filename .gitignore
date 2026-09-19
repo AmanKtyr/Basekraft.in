@@ -1,0 +1,41 @@
+# ==============================================================================
+# Basekraft Studio - Root Git Ignore
+# ==============================================================================
+
+# Agent and AI Tooling Folders (Do not push to GitHub)
+.agents/
+skills-lock.json
+.ai/
+
+# Secrets and Local Environment Configuration
+.env
+.env*.local
+*.env
+
+# Node.js / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python & Django (Backend)
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*.py[cod]
+backend/*/*.py[cod]
+backend/venv/
+backend/.venv/
+backend/env/
+backend/db.sqlite3
+backend/media/
+
+# OS and Editor temporary files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
