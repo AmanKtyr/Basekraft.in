@@ -17,12 +17,163 @@ import {
   MoreHorizontal,
   ArrowRightCircle,
   MoveRight,
+  X,
 } from "lucide-react";
-import { mockTasks } from "@/data/mockData";
+import { mockTasks, initialProjects } from "@/data/mockData";
 import { TaskItem } from "@/types";
 
 type TaskTab = "tasks" | "requests" | "issues";
 type CategoryFilter = "All" | "Task" | "Snags" | "Hindrance" | "Followup";
+
+export function NewTaskModal({
+  isOpen,
+  onClose,
+  onAddTask,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAddTask: (task: TaskItem) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [selectedProject, setSelectedProject] = useState(initialProjects[0]);
+  const [category, setCategory] = useState<TaskItem["category"]>("Task");
+  const [assigneeName, setAssigneeName] = useState("Rohan Malhotra");
+  const [dueDate, setDueDate] = useState("2026-09-25");
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title) return;
+
+    const newTask: TaskItem = {
+      id: `task-${Date.now()}`,
+      title,
+      projectCode: selectedProject.code,
+      clientName: selectedProject.clientName,
+      assigneeName,
+      status: "created",
+      category,
+      createdDate: "Today",
+      dueDate,
+      timeLogged: "00:00:00",
+      commentsCount: 0,
+      isOverdue: false,
+    };
+
+    onAddTask(newTask);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              Add New Task or Snag
+            </h2>
+            <p className="text-xs text-zinc-500">
+              Assign field ops, quality audits, client follow-ups, or site hindrances
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+          <div className="space-y-1.5">
+            <label className="font-medium text-zinc-700 dark:text-zinc-300">Task Title *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Electrical conduit pressure test, Living room ceiling inspection..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Select Project *</label>
+              <select
+                value={selectedProject.code}
+                onChange={(e) => {
+                  const found = initialProjects.find((p) => p.code === e.target.value);
+                  if (found) setSelectedProject(found);
+                }}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              >
+                {initialProjects.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.code} - {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Task Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as TaskItem["category"])}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              >
+                <option value="Task">Task (General)</option>
+                <option value="Snags">Snags & Defects</option>
+                <option value="Hindrance">Site Hindrance</option>
+                <option value="Followup">Client Follow-up</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Assignee Name *</label>
+              <input
+                type="text"
+                required
+                value={assigneeName}
+                onChange={(e) => setAssigneeName(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Target Due Date</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3.5 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-md bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-medium hover:opacity-90 transition shadow-xs"
+            >
+              Create Task
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<TaskItem[]>(mockTasks);
@@ -32,6 +183,7 @@ export default function TasksPage() {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [activeDropCol, setActiveDropCol] = useState<TaskItem["status"] | null>(null);
   const [activeMenuTaskId, setActiveMenuTaskId] = useState<string | null>(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   // Ref to guarantee drag ID persistence across all browser drag event cycles
   const draggedTaskIdRef = useRef<string | null>(null);
@@ -76,6 +228,10 @@ export default function TasksPage() {
     setActiveMenuTaskId(null);
   };
 
+  const handleAddTask = (newTask: TaskItem) => {
+    setTasks((prev) => [newTask, ...prev]);
+  };
+
   // Drag and Drop handlers
   const handleDragStart = (e: React.DragEvent, id: string) => {
     draggedTaskIdRef.current = id;
@@ -99,7 +255,6 @@ export default function TasksPage() {
   };
 
   const handleDragLeave = (e: React.DragEvent, colId: TaskItem["status"]) => {
-    // Only clear if leaving the container itself
     const related = e.relatedTarget as HTMLElement | null;
     if (!related || !e.currentTarget.contains(related)) {
       if (activeDropCol === colId) {
@@ -239,7 +394,10 @@ export default function TasksPage() {
               className="pl-9 pr-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none w-64"
             />
           </div>
-          <button className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs">
+          <button
+            onClick={() => setIsTaskModalOpen(true)}
+            className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs cursor-pointer active:scale-98"
+          >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Task</span>
           </button>
@@ -435,6 +593,12 @@ export default function TasksPage() {
           );
         })}
       </div>
+
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onAddTask={handleAddTask}
+      />
     </div>
   );
 }

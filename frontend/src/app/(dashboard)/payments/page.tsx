@@ -1,12 +1,145 @@
 "use client";
 
 import React, { useState } from "react";
-import { WalletCards, Plus, CheckCircle, XCircle, Clock, ArrowUpRight } from "lucide-react";
-import { mockPaymentRequests } from "@/data/mockData";
+import { WalletCards, Plus, CheckCircle, XCircle, Clock, ArrowUpRight, X } from "lucide-react";
+import { mockPaymentRequests, initialProjects } from "@/data/mockData";
 import { PaymentRequest } from "@/types";
+
+export function NewPaymentRequestModal({
+  isOpen,
+  onClose,
+  onAddRequest,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAddRequest: (req: PaymentRequest) => void;
+}) {
+  const [selectedProject, setSelectedProject] = useState(initialProjects[0]);
+  const [requestedBy, setRequestedBy] = useState("Amit Verma (Site Supervisor)");
+  const [category, setCategory] = useState("Material Purchase");
+  const [amount, setAmount] = useState("35000");
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newReq: PaymentRequest = {
+      id: `pay-${Date.now()}`,
+      projectCode: selectedProject.code,
+      projectName: selectedProject.name,
+      requestedBy: requestedBy.split("(")[0].trim(),
+      role: "Site Supervisor",
+      amount: Number(amount) || 0,
+      category,
+      status: "pending",
+      date: new Date().toISOString().split("T")[0],
+      notes: `Site authorization request for ${selectedProject.name}`,
+    };
+    onAddRequest(newReq);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              New Site Payment Request
+            </h2>
+            <p className="text-xs text-zinc-500">
+              Request contractor advance, urgent materials, or supervisor wallet replenishment
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+          <div className="space-y-1.5">
+            <label className="font-medium text-zinc-700 dark:text-zinc-300">Select Project *</label>
+            <select
+              value={selectedProject.code}
+              onChange={(e) => {
+                const found = initialProjects.find((p) => p.code === e.target.value);
+                if (found) setSelectedProject(found);
+              }}
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+            >
+              {initialProjects.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {p.code} - {p.name} ({p.clientName})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Requester Name *</label>
+              <input
+                type="text"
+                required
+                value={requestedBy}
+                onChange={(e) => setRequestedBy(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Category *</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              >
+                <option value="Material Purchase">Material Purchase</option>
+                <option value="Labor Wages">Labor Wages</option>
+                <option value="Contractor Advance">Contractor Advance</option>
+                <option value="Equipment Rental">Equipment Rental</option>
+                <option value="Site Petty Cash">Site Petty Cash</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-medium text-zinc-700 dark:text-zinc-300">Requested Amount (₹) *</label>
+            <input
+              type="number"
+              required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+            />
+          </div>
+
+          <div className="pt-2 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3.5 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-md bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-medium hover:opacity-90 transition shadow-xs"
+            >
+              Submit Request
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function PaymentsPage() {
   const [requests, setRequests] = useState<PaymentRequest[]>(mockPaymentRequests);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const formatCurrency = (val: number) => {
     return `₹${val.toLocaleString("en-IN")}`;
@@ -16,6 +149,10 @@ export default function PaymentsPage() {
     setRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
     );
+  };
+
+  const handleAddRequest = (newReq: PaymentRequest) => {
+    setRequests((prev) => [newReq, ...prev]);
   };
 
   return (
@@ -29,7 +166,10 @@ export default function PaymentsPage() {
             Authorize on-site material purchases, contractor labor advances, and petty cash wallets
           </p>
         </div>
-        <button className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs cursor-pointer active:scale-98"
+        >
           <Plus className="w-3.5 h-3.5" />
           <span>New Request</span>
         </button>
@@ -100,13 +240,13 @@ export default function PaymentsPage() {
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => updateStatus(r.id, "approved")}
-                        className="px-2.5 py-1 rounded bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[11px] font-medium"
+                        className="px-2.5 py-1 rounded bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[11px] font-medium hover:opacity-90 transition"
                       >
                         Approve
                       </button>
                       <button
                         onClick={() => updateStatus(r.id, "rejected")}
-                        className="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-600 text-[11px]"
+                        className="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-600 text-[11px] transition"
                       >
                         Reject
                       </button>
@@ -120,6 +260,12 @@ export default function PaymentsPage() {
           </tbody>
         </table>
       </div>
+
+      <NewPaymentRequestModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddRequest={handleAddRequest}
+      />
     </div>
   );
 }
