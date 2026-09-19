@@ -50,6 +50,7 @@ export function NewTaskModal({
       id: `task-${Date.now()}`,
       title,
       projectCode: selectedProject.code,
+      projectName: selectedProject.name,
       clientName: selectedProject.clientName,
       assigneeName,
       status: "created",

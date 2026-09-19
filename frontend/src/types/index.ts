@@ -4,7 +4,12 @@ export type ProjectSector =
   | "Interior Design & Turnkey"
   | "Solar Energy & Rooftop EPC"
   | "Modular Furniture & Manufacturing"
-  | "Real Estate & Civil Contracting";
+  | "Real Estate & Civil Contracting"
+  | "Residential"
+  | "Commercial Office"
+  | "Retail & Showroom"
+  | "Hospitality & F&B"
+  | "Healthcare & Wellness";
 
 export interface MaterialMasterItem {
   id: string;
@@ -77,11 +82,12 @@ export interface PaymentRequest {
   requestedBy: string;
   role: string;
   amount: number;
-  category: "Material Purchase" | "Contractor Labor" | "Site Logistics" | "Vendor Advance";
+  category: string;
   status: "pending" | "approved" | "rejected" | "paid";
   date: string;
   invoiceUrl?: string;
   invoiceRef?: string;
+  notes?: string;
 }
 
 export interface TaskItem {
@@ -106,7 +112,7 @@ export interface OrderItem {
   projectCode: string;
   projectName: string;
   vendorName: string;
-  itemCategory: "Plywood & Veneer" | "Hardware & Fittings" | "Marble & Tiles" | "Sanitary & CP" | "Electricals";
+  itemCategory: string;
   amount: number;
   paidAmount: number;
   status: "Approved" | "Pending PO" | "Dispatched" | "Delivered" | "Cancelled";
