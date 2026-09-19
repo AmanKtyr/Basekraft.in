@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Building2, MapPin, IndianRupee, Calendar, User, Phone, Check } from "lucide-react";
-import { Project, ProjectStage } from "@/types";
+import React, { useState, useId } from "react";
+import { X, Building2, MapPin, IndianRupee, Calendar, User, Phone, Check, Sun, Factory, Home, Layers } from "lucide-react";
+import { Project, ProjectStage, ProjectSector } from "@/types";
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -10,7 +10,84 @@ interface NewProjectModalProps {
   onAddProject: (project: Project) => void;
 }
 
+const sectorOptions: {
+  id: ProjectSector;
+  label: string;
+  subTypes: string[];
+  checkpoints: { label: string; category: "Civil" | "Design" | "Electrical" | "Finishes" | "Legal" }[];
+}[] = [
+  {
+    id: "Interior Design & Turnkey",
+    label: "Interior Design & Turnkey Fit-out",
+    subTypes: [
+      "Residential Apartment (2BHK / 3BHK / 4BHK)",
+      "Luxury Penthouse / Duplex",
+      "Corporate Office Interior",
+      "Retail Showroom / F&B Restaurant",
+    ],
+    checkpoints: [
+      { label: "Site Survey & 2D Space Planning", category: "Design" },
+      { label: "3D Visual Concept & Client Sign-off", category: "Design" },
+      { label: "Civil, Electrical & Plumbing Concealing", category: "Civil" },
+      { label: "Carpentry, False Ceiling & Surface Finishes", category: "Finishes" },
+      { label: "Final Snag Rectification & Handover", category: "Finishes" },
+    ],
+  },
+  {
+    id: "Solar Energy & Rooftop EPC",
+    label: "Solar Energy & Rooftop EPC",
+    subTypes: [
+      "Residential Rooftop Solar (3 kW - 10 kW)",
+      "Commercial Net-Metered Solar (25 kW - 150 kW)",
+      "Industrial Captive Solar Plant (500 kW+)",
+      "Agricultural PM-KUSUM Solar Pump System",
+    ],
+    checkpoints: [
+      { label: "Drone Roof Survey & Shadow Analysis", category: "Design" },
+      { label: "DISCOM Load Sanction & Net-Meter Application", category: "Legal" },
+      { label: "Module Mounting Structure (MMS) Installation", category: "Civil" },
+      { label: "Inverter, ACDB/DCDB & Earthing Pit Testing", category: "Electrical" },
+      { label: "Grid Synchronization & Subsidy Disbursal", category: "Legal" },
+    ],
+  },
+  {
+    id: "Modular Furniture & Manufacturing",
+    label: "Modular Furniture & Manufacturing",
+    subTypes: [
+      "Modular Kitchen & Wardrobe Package",
+      "Full Home Factory Millwork Package",
+      "Corporate Office Workstations & Desks",
+      "Retail Display Fixtures & Wall Paneling",
+    ],
+    checkpoints: [
+      { label: "Site Laser Measurement & Cut-list Generation", category: "Design" },
+      { label: "CNC Board Cutting & 2mm Edge Banding", category: "Civil" },
+      { label: "Hardware & Soft-close Channel QA", category: "Finishes" },
+      { label: "Factory Flat-pack Packaging & Dispatch", category: "Civil" },
+      { label: "On-site Modular Carcass Assembly & Sign-off", category: "Finishes" },
+    ],
+  },
+  {
+    id: "Real Estate & Civil Contracting",
+    label: "Real Estate & Civil Construction",
+    subTypes: [
+      "Independent Luxury Villa (Turnkey Civil)",
+      "Plotted Housing Scheme Development",
+      "Commercial Complex Structure (RCC + Façade)",
+      "Civil Extension & Structural Retrofit",
+    ],
+    checkpoints: [
+      { label: "Land Demarcation & Soil Testing", category: "Civil" },
+      { label: "Foundation & Plinth RCC Casting", category: "Civil" },
+      { label: "Columns, Beams & Slab Casting", category: "Civil" },
+      { label: "Brickwork, MEP Concealing & Internal Plaster", category: "Electrical" },
+      { label: "Flooring, Façade & OC Handover", category: "Legal" },
+    ],
+  },
+];
+
 export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectModalProps) {
+  const [sector, setSector] = useState<ProjectSector>("Interior Design & Turnkey");
   const [name, setName] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
@@ -18,12 +95,20 @@ export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectMod
   const [state, setState] = useState("Maharashtra");
   const [budget, setBudget] = useState("5000000");
   const [carpetAreaSqFt, setCarpetAreaSqFt] = useState("2400");
-  const [propertyType, setPropertyType] = useState<Project["propertyType"]>("Residential 3BHK");
   const [stage, setStage] = useState<ProjectStage>("sales");
   const [pmName, setPmName] = useState("Rohan Malhotra");
   const [designerName, setDesignerName] = useState("Ananya Deshmukh");
 
+  const currentSectorConfig = sectorOptions.find((s) => s.id === sector) || sectorOptions[0];
+  const [subType, setSubType] = useState(currentSectorConfig.subTypes[0]);
+
   if (!isOpen) return null;
+
+  const handleSectorChange = (newSector: ProjectSector) => {
+    setSector(newSector);
+    const config = sectorOptions.find((s) => s.id === newSector) || sectorOptions[0];
+    setSubType(config.subTypes[0]);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +123,7 @@ export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectMod
       clientPhone,
       city,
       state,
+      sector,
       stage,
       subStage: stage === "sales" ? "Initial Pitch & Survey" : "Concept & 3D Drafting",
       budget: Number(budget) || 0,
@@ -47,17 +133,19 @@ export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectMod
       pmName,
       designerName,
       progressPercent: 5,
-      totalCheckpoints: 15,
+      totalCheckpoints: currentSectorConfig.checkpoints.length,
       completedCheckpoints: 1,
       pendingApprovalsCount: 0,
       pendingIssuesCount: 0,
-      propertyType,
+      propertyType: subType as any,
       carpetAreaSqFt: Number(carpetAreaSqFt) || 0,
-      description: `Turnkey interior fit-out for ${clientName} (${propertyType}) located in ${city}.`,
-      checkpoints: [
-        { id: "c1", label: "Initial Site Measurement & Layout", isCompleted: true, category: "Design" },
-        { id: "c2", label: "Client Brief & Concept Presentation", isCompleted: false, category: "Design" },
-      ],
+      description: `${sector} execution for ${clientName} (${subType}) in ${city}.`,
+      checkpoints: currentSectorConfig.checkpoints.map((cp, idx) => ({
+        id: `cp-${idx + 1}`,
+        label: cp.label,
+        isCompleted: idx === 0,
+        category: cp.category,
+      })),
     };
 
     onAddProject(newProject);
@@ -70,9 +158,11 @@ export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectMod
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Initialize New Project</h2>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              Initialize New Project
+            </h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Create project code, client record, and turnkey milestone framework
+              Supports Solar, Modular Furniture, Turnkey Interiors, and Real Estate Construction
             </p>
           </div>
           <button
@@ -84,105 +174,143 @@ export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectMod
         </div>
 
         {/* Modal Body Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+          {/* Business Sector Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Project Title *</label>
+            <label className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Business Sector & Industry *</span>
+            </label>
+            <select
+              value={sector}
+              onChange={(e) => handleSectorChange(e.target.value as ProjectSector)}
+              className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md px-3 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            >
+              {sectorOptions.map((sec) => (
+                <option key={sec.id} value={sec.id}>
+                  {sec.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Project Title */}
+          <div className="space-y-1.5">
+            <label className="font-medium text-zinc-700 dark:text-zinc-300">Project Title *</label>
             <input
               type="text"
               required
-              placeholder="e.g. The Emerald Penthouse, Villa Nirvana..."
+              placeholder={
+                sector === "Solar Energy & Rooftop EPC"
+                  ? "e.g. 50kW Rooftop Solar at Patel Cold Storage"
+                  : sector === "Modular Furniture & Manufacturing"
+                  ? "e.g. 3BHK Modular Kitchen & Wardrobe Package - Mittal Villa"
+                  : sector === "Real Estate & Civil Contracting"
+                  ? "e.g. 4500 SqFt Turnkey Villa RCC Construction"
+                  : "e.g. The Emerald Penthouse, Villa Nirvana..."
+              }
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
 
+          {/* Client Info Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Client Name *</label>
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Client / Company Name *</label>
               <input
                 type="text"
                 required
                 placeholder="Dr. Sameer Kapoor"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100"
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Client Phone Number</label>
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Client Phone Number</label>
               <input
                 type="tel"
                 placeholder="+91 98000 00000"
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100"
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none"
               />
             </div>
           </div>
 
+          {/* Sector-Specific Type, City & Budget */}
           <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5 col-span-2">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">
+                {sector === "Solar Energy & Rooftop EPC"
+                  ? "Solar System Capacity & Type"
+                  : sector === "Modular Furniture & Manufacturing"
+                  ? "Furniture Scope & Package"
+                  : sector === "Real Estate & Civil Contracting"
+                  ? "Construction Scope"
+                  : "Property & Project Type"}
+              </label>
+              <select
+                value={subType}
+                onChange={(e) => setSubType(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              >
+                {currentSectorConfig.subTypes.map((st) => (
+                  <option key={st} value={st}>
+                    {st}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">City</label>
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">City / Location</label>
               <input
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Property Type</label>
-              <select
-                value={propertyType}
-                onChange={(e) => setPropertyType(e.target.value as any)}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-              >
-                <option value="Residential 3BHK">Residential 3BHK</option>
-                <option value="Luxury Villa">Luxury Villa</option>
-                <option value="Commercial Office">Commercial Office</option>
-                <option value="Retail Boutique">Retail Boutique</option>
-                <option value="Penthouse">Penthouse</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Budget (₹ INR)</label>
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">Project Budget (₹ INR) *</label>
               <input
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-medium text-zinc-700 dark:text-zinc-300">
+                {sector === "Solar Energy & Rooftop EPC" ? "Estimated System Size (kW)" : "Carpet / Plot Area (Sq. Ft.)"}
+              </label>
+              <input
+                type="number"
+                value={carpetAreaSqFt}
+                onChange={(e) => setCarpetAreaSqFt(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Assigned Project Manager</label>
-              <select
-                value={pmName}
-                onChange={(e) => setPmName(e.target.value)}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none"
-              >
-                <option value="Rohan Malhotra">Rohan Malhotra</option>
-                <option value="Karan Johar">Karan Johar</option>
-              </select>
+          {/* Sector Checkpoint Preview */}
+          <div className="p-3 bg-zinc-50 dark:bg-zinc-950/60 rounded border border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 space-y-1">
+            <div className="font-semibold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
+              <span>Auto-loaded {sector} Checkpoint Pipeline:</span>
+              <span className="font-mono text-[10px]">{currentSectorConfig.checkpoints.length} Stages</span>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Lead Interior Designer</label>
-              <select
-                value={designerName}
-                onChange={(e) => setDesignerName(e.target.value)}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none"
-              >
-                <option value="Ananya Deshmukh">Ananya Deshmukh</option>
-                <option value="Meera Nair">Meera Nair</option>
-              </select>
-            </div>
+            <p className="text-[10px] text-zinc-400">
+              {currentSectorConfig.checkpoints.map((c) => c.label).join(" → ")}
+            </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}

@@ -1,6 +1,10 @@
 export type ProjectStage = "sales" | "design" | "execution" | "handover" | "inactive";
 
-export type ProjectSector = "Residential" | "Commercial Office" | "Retail & Showroom" | "Hospitality & F&B" | "Healthcare & Wellness";
+export type ProjectSector =
+  | "Interior Design & Turnkey"
+  | "Solar Energy & Rooftop EPC"
+  | "Modular Furniture & Manufacturing"
+  | "Real Estate & Civil Contracting";
 
 export interface MaterialMasterItem {
   id: string;
