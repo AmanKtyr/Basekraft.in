@@ -29,7 +29,7 @@ export default function PortfolioPage() {
   }, [selectedCategory]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#08070e] text-[#f4f4f5] font-sans selection:bg-purple-600 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#030014] text-[#f4f4f5] font-sans selection:bg-purple-600 selection:text-white relative overflow-x-hidden">
       <WebsiteNavbar onOpenConsultation={() => setIsConsultationOpen(true)} />
 
       <main className="flex-1 w-full space-y-16 py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -97,7 +97,7 @@ export default function PortfolioPage() {
                       <span>{item.carpetAreaSqFt.toLocaleString()} sq.ft</span>
                     </div>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#08070e] via-[#08070e]/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-[#030014]/40 to-transparent" />
                 </div>
 
                 {/* Details */}

@@ -38,7 +38,7 @@ export default function AboutPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#08070e] text-[#f4f4f5] font-sans selection:bg-purple-600 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#030014] text-[#f4f4f5] font-sans selection:bg-purple-600 selection:text-white relative overflow-x-hidden">
       <WebsiteNavbar />
 
       <main className="flex-1 w-full space-y-20 py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
