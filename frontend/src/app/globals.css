@@ -264,3 +264,29 @@ h1, h2, h3 {
   box-shadow: 0 16px 40px -12px rgba(110, 37, 237, 0.3);
   transform: translateY(-2px);
 }
+
+/* Helyonex Testimonial & Feature Card Border */
+.features-box-border {
+  position: relative;
+  background: rgba(10, 6, 30, 0.75);
+  backdrop-filter: blur(16px);
+  border-radius: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.features-box-border:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.02) 100%);
+  pointer-events: none;
+}
+.features-box-border:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -15px rgba(110, 37, 237, 0.35);
+}

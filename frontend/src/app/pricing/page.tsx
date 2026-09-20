@@ -38,9 +38,45 @@ export default function PricingPage() {
     <div className="min-h-screen flex flex-col bg-[#030014] text-[#f4f4f5] font-sans selection:bg-purple-600 selection:text-white relative overflow-x-hidden">
       <WebsiteNavbar onOpenConsultation={() => setIsConsultationOpen(true)} />
 
-      <main className="flex-1 w-full space-y-20 py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        {/* Ambient Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 w-[600px] h-[300px] bg-purple-600/15 blur-[120px] rounded-full pointer-events-none" />
+      <main className="flex-1 w-full space-y-20 py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative isolate">
+        {/* Cosmic Planet Horizon Background Layers (Behind Section Content) */}
+        <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+          {/* Ambient Purple Blur Radiance */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0">
+            <img src="/images/blur-13.svg" alt="blur" className="max-w-none opacity-80" />
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2 top-0">
+            <img src="/images/blur-14.svg" alt="blur" className="max-w-none opacity-90" />
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2 top-0">
+            <img src="/images/blur-15.svg" alt="blur" className="max-w-none" />
+          </div>
+
+          {/* Core Cosmic Violet Halo */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#6e25ed]/20 blur-[130px] rounded-full" />
+
+          {/* Radiant Curved Planet Horizon Arcs */}
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] rounded-t-full border-t border-purple-400/40 bg-gradient-to-b from-purple-950/20 to-transparent shadow-[0_-15px_60px_rgba(134,70,244,0.3)]" />
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[900px] h-[450px] rounded-t-full border-t border-purple-300/20" />
+
+          {/* Twinkling Star Field Particles */}
+          <div className="max-w-[482px] w-full h-60 overflow-hidden absolute top-4 left-1/2 -translate-x-1/2">
+            <div className="stars" />
+            <div className="stars2" />
+          </div>
+
+          {/* Vertical 8 Grid Bars with soft gradient borders */}
+          <div className="flex justify-center gap-4 sm:gap-8 absolute top-16 left-1/2 -translate-x-1/2 w-full opacity-40">
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border hidden sm:block" />
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+            <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border hidden sm:block" />
+          </div>
+        </div>
 
         {/* Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">

@@ -117,99 +117,218 @@ export default function RootWebsiteHomePage() {
           </div>
 
           {/* ========================================================= */}
-          {/* 2. LIVE PLATFORM SIMULATOR FRAME */}
+          {/* 2. LIVE PLATFORM SIMULATOR FRAME (HELYONEX COSMIC THEME) */}
           {/* ========================================================= */}
-          <div className="mt-14 sm:mt-20 rounded-2xl border border-white/[0.12] bg-[#0a061e]/90 backdrop-blur-2xl shadow-[0_20px_70px_-20px_rgba(109,40,217,0.4)] overflow-hidden transition relative">
-            {/* Window chrome header */}
-            <div className="px-5 py-3.5 bg-white/[0.03] border-b border-white/[0.08] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                <span className="ml-3 text-[11px] font-mono text-zinc-400 hidden sm:inline">
-                  basekraft-studio.os // practice-telemetry // v2.4
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                <span className="text-[11px] text-zinc-300">Telemetry Live</span>
-              </div>
+          <div className="mt-14 sm:mt-20 relative max-w-6xl mx-auto">
+            {/* Ambient Purple Blur Radiance (Helyonex Authentic Blurs 03 & 04) */}
+            <div className="absolute -top-24 left-1/2 -translate-x-1/2 pointer-events-none -z-10 w-full flex justify-center">
+              <img src="/images/blur-03.svg" alt="blur" className="max-w-none opacity-80" />
+            </div>
+            <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 pointer-events-none -z-10 w-full flex justify-center">
+              <img src="/images/blur-04.svg" alt="blur" className="max-w-none opacity-90" />
             </div>
 
-            {/* Simulation Preview Grid */}
-            <div className="p-5 sm:p-8 bg-[#050314]/80">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {/* Metric 1 */}
-                <div className="glass-card p-5 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
-                      Turnkey Pipeline
-                    </span>
-                    <span className="text-[10px] font-mono text-purple-300 px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-800/40">
-                      Live
+            {/* Glowing Gradient Border Outer Shell */}
+            <div className="relative rounded-3xl p-[1px] bg-gradient-to-b from-purple-500/50 via-purple-900/30 to-purple-950/10 shadow-[0_0_80px_-20px_rgba(134,70,244,0.45)]">
+              {/* Inner High-End Glassmorphism Container */}
+              <div className="rounded-[23px] bg-[#07041a]/95 backdrop-blur-2xl overflow-hidden border border-white/[0.06]">
+                {/* Window Chrome Header */}
+                <div className="px-5 py-4 bg-white/[0.02] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
+                  {/* Left: Window Dots & Active Workspace Tab */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-red-500/90 shadow-[0_0_8px_rgba(239,68,68,0.5)] inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-amber-500/90 shadow-[0_0_8px_rgba(245,158,11,0.5)] inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-emerald-500/90 shadow-[0_0_8px_rgba(16,185,129,0.5)] inline-block" />
+                    </div>
+
+                    {/* Studio Project Tab */}
+                    <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.04] border border-purple-500/30 text-xs font-mono text-purple-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                      <span>DLF Camellias Penthouse #619</span>
+                    </div>
+
+                    <span className="text-[11px] font-mono text-zinc-500 hidden md:inline">
+                      // basekraft-studio.os v2.4
                     </span>
                   </div>
-                  <div className="text-3xl font-extrabold font-mono text-white">
-                    ₹6.70 Cr
-                  </div>
-                  <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>5 prime sites on schedule</span>
+
+                  {/* Right: Telemetry Live Indicator */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[11px] font-mono text-emerald-300">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                      <span>Telemetry Live • 18ms</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Metric 2 */}
-                <div className="glass-card p-5 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
-                      Quality Audits
-                    </span>
-                    <span className="text-[10px] font-mono text-emerald-300 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/40">
-                      Zero Snags
-                    </span>
-                  </div>
-                  <div className="text-3xl font-extrabold font-mono text-white">
-                    39 / 89 Passed
-                  </div>
-                  <div className="text-[11px] text-zinc-400 font-mono">
-                    No structural tolerance deviations
-                  </div>
-                </div>
+                {/* Simulation Preview Grid */}
+                <div className="p-6 sm:p-8 bg-[#040114]/90 relative">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Telemetry Pod 1: Turnkey Commercial Pipeline */}
+                    <div className="rounded-2xl bg-[#090520] p-6 pricing-item-border relative overflow-hidden group hover:border-purple-500/40 transition-all duration-300">
+                      <div className="features-bg absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="relative z-10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="icon-border w-9 h-9 rounded-lg flex items-center justify-center text-purple-300">
+                              <Building2 className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                              Turnkey Pipeline
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-purple-300 px-2 py-0.5 rounded-full bg-purple-950/80 border border-purple-800/50 font-bold">
+                            Live Audited
+                          </span>
+                        </div>
 
-                {/* Metric 3 */}
-                <div className="glass-card p-5 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
-                      Client Portal Health
-                    </span>
-                    <span className="text-[10px] font-mono text-blue-300 px-2 py-0.5 rounded-full bg-blue-950/60 border border-blue-800/40">
-                      99.4% CSAT
-                    </span>
-                  </div>
-                  <div className="text-3xl font-extrabold font-mono text-white">
-                    Instant Sign-offs
-                  </div>
-                  <div className="text-[11px] text-zinc-400 font-mono">
-                    Real-time 3D approvals enabled
-                  </div>
-                </div>
-              </div>
+                        <div>
+                          <div className="text-3xl sm:text-4xl font-extrabold font-mono pricing-gradient-text tracking-tight">
+                            ₹6.70 Cr
+                          </div>
+                          <p className="text-xs text-zinc-400 font-mono mt-1">
+                            Contracted Turnkey Execution Value
+                          </p>
+                        </div>
 
-              {/* Module Ribbon */}
-              <div className="mt-6 pt-6 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-4 text-xs">
-                <div className="flex items-center gap-5 sm:gap-8 font-mono text-zinc-400 text-[11px]">
-                  <span>• Dynamic 5-Room BOQ</span>
-                  <span>• 3-Mode Architectural Letterhead</span>
-                  <span>• Live Snag Punch-List</span>
-                  <span>• Vendor Purchase Orders</span>
+                        {/* Visual Progress Bar */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-zinc-400">Site Milestones</span>
+                            <span className="text-purple-300 font-bold">82% on Schedule</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-purple-600 to-indigo-500 rounded-full w-[82%]" />
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/[0.06] text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          <span>5 prime residential sites active</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Telemetry Pod 2: Quality Audits & Snags */}
+                    <div className="rounded-2xl bg-[#090520] p-6 pricing-item-border relative overflow-hidden group hover:border-purple-500/40 transition-all duration-300">
+                      <div className="features-bg absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="relative z-10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="icon-border w-9 h-9 rounded-lg flex items-center justify-center text-purple-300">
+                              <ShieldCheck className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                              Quality Audits
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-emerald-300 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800/50 font-bold">
+                            Zero Snags
+                          </span>
+                        </div>
+
+                        <div>
+                          <div className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
+                            89 / 89
+                          </div>
+                          <p className="text-xs text-zinc-400 font-mono mt-1">
+                            Tolerance Checkpoints Passed
+                          </p>
+                        </div>
+
+                        {/* Visual Progress Bar */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-zinc-400">Tolerance Rate</span>
+                            <span className="text-emerald-300 font-bold">100% Verified</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full w-full" />
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/[0.06] text-[11px] text-zinc-400 font-mono">
+                          <span>Zero structural tolerance deviations</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Telemetry Pod 3: Private Client Portal Sign-Offs */}
+                    <div className="rounded-2xl bg-[#090520] p-6 pricing-item-border relative overflow-hidden group hover:border-purple-500/40 transition-all duration-300">
+                      <div className="features-bg absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="relative z-10 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="icon-border w-9 h-9 rounded-lg flex items-center justify-center text-purple-300">
+                              <Sparkles className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                              Client Portal Health
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-blue-300 px-2 py-0.5 rounded-full bg-blue-950/80 border border-blue-800/50 font-bold">
+                            99.4% CSAT
+                          </span>
+                        </div>
+
+                        <div>
+                          <div className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
+                            Instant Sign-offs
+                          </div>
+                          <p className="text-xs text-zinc-400 font-mono mt-1">
+                            Real-time 3D Approval Engine
+                          </p>
+                        </div>
+
+                        {/* Visual Progress Bar */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-zinc-400">Approval Speed</span>
+                            <span className="text-blue-300 font-bold">4.2 hrs Average</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full w-[94%]" />
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/[0.06] text-[11px] text-zinc-400 font-mono">
+                          <span>Real-time 3D approvals enabled</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Capabilities Ribbon */}
+                  <div className="mt-8 pt-6 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs font-mono">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-zinc-300">
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Dynamic 5-Room BOQ</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-zinc-300">
+                        <Layers className="w-3.5 h-3.5 text-purple-400" />
+                        <span>3-Mode Letterhead</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-zinc-300">
+                        <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Live Snag Punch-List</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-zinc-300">
+                        <Building2 className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Vendor Purchase Orders</span>
+                      </span>
+                    </div>
+
+                    <Link
+                      href="/login"
+                      className="hero-button-gradient inline-flex items-center gap-2 py-2.5 px-5 text-white text-xs font-bold rounded-lg shadow-[0_4px_20px_rgba(110,37,237,0.4)] hover:opacity-90 transition"
+                    >
+                      <span>Launch Studio OS Workspace</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
-                <Link
-                  href="/login"
-                  className="text-xs font-bold text-purple-300 hover:text-purple-200 flex items-center gap-1 transition"
-                >
-                  <span>Access Studio Workspace</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
               </div>
             </div>
           </div>
@@ -353,51 +472,164 @@ export default function RootWebsiteHomePage() {
         </section>
 
         {/* ========================================================= */}
-        {/* 5. PLANETARY DOME HORIZON & PRICING (EXACT MATCH SCREENSHOT 1) */}
+        {/* 5. CLIENT TESTIMONIALS SECTION (ABOVE THE PLANETARY DOME) */}
         {/* ========================================================= */}
-        <section id="pricing" className="relative overflow-hidden pt-12 pb-24 isolate">
+        <section className="relative z-20 pt-8 pb-0">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-8 xl:px-0">
-            {/* Background Dome Horizon Arch & Purple Cosmic Aura */}
-            <div className="relative top-18">
-              <div className="absolute -z-10 pointer-events-none inset-0 overflow-hidden -my-55">
-                <div className="absolute left-1/2 -translate-x-1/2 top-0">
-                  <img src="/images/blur-13.svg" alt="blur" className="max-w-none opacity-80" />
-                </div>
-                <div className="absolute left-1/2 -translate-x-1/2 top-0">
-                  <img src="/images/blur-14.svg" alt="blur" className="max-w-none opacity-90" />
-                </div>
-                <div className="absolute left-1/2 -translate-x-1/2 top-0">
-                  <img src="/images/blur-15.svg" alt="blur" className="max-w-none" />
-                </div>
-              </div>
-
-              {/* Cosmic Planet Dome Hemisphere */}
-              <div className="max-w-[830px] w-full h-[830px] rounded-full bg-[#030014] absolute left-1/2 -translate-x-1/2 top-0 pricing-circle shadow-[0_-20px_100px_rgba(134,70,244,0.35)]">
-              </div>
-
-              {/* Twinkling Star Field Particles */}
-              <div className="max-w-[482px] w-full h-60 overflow-hidden absolute -z-1 -top-30 left-1/2 -translate-x-1/2 pointer-events-none">
-                <div className="stars" />
-                <div className="stars2" />
-              </div>
-            </div>
-
-            {/* Vertical 8 Grid Bars with soft gradient borders (From Screenshot 1) */}
-            <div className="flex justify-center gap-4 sm:gap-7.5 relative -z-1 opacity-75">
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border hidden sm:block" />
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border" />
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border" />
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border" />
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border" />
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border" />
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border" />
-              <div className="max-w-[50px] w-full h-[250px] relative pricing-grid pricing-grid-border hidden sm:block" />
-            </div>
-
-            {/* Section Title at the Apex of the Horizon (Exact Screenshot 1 Layout) */}
-            <div className="mb-16 -mt-24 text-center z-10 relative">
+            {/* Section Title */}
+            <div className="text-center mb-14">
               <div className="mb-4 inline-block">
                 <div className="hero-subtitle-gradient relative font-medium text-sm inline-flex items-center gap-2 py-2 px-5 rounded-full cursor-pointer hover:scale-105 transition-all duration-200">
+                  <img src="/images/icon-title.svg" alt="icon" className="w-4 h-4" />
+                  <span className="hero-subtitle-text font-semibold">Client Testimonials</span>
+                </div>
+              </div>
+              <h2 className="text-white mb-4 text-3xl font-extrabold sm:text-5xl tracking-tight">
+                What Our Clients Say
+              </h2>
+              <p className="max-w-[700px] mx-auto font-medium text-zinc-300 text-sm sm:text-base leading-relaxed">
+                Here is what leading architectural studios, luxury homeowners, and turnkey developers say about our precision practice OS.
+              </p>
+            </div>
+
+            {/* Testimonials Grid (3 Cards matching Screenshot 1 Top Row) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
+              {/* Item 1 */}
+              <div className="features-box-border p-8 md:p-9 flex flex-col justify-between group">
+                <div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <svg width="28" height="22" viewBox="0 0 30 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 12.5L7.5 0H13.75L8.75 12.5H13.75V25H0V12.5ZM16.25 12.5L23.75 0H30L25 12.5H30V25H16.25V12.5Z" fill="url(#quote_grad_1)"/>
+                      <defs>
+                        <linearGradient id="quote_grad_1" x1="0" y1="0" x2="30" y2="25" gradientUnits="userSpaceOnUse">
+                          <stop offset="0" stopColor="#a073ee"/>
+                          <stop offset="1" stopColor="#6e25ed"/>
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="flex text-amber-400 text-xs">★★★★★</div>
+                  </div>
+                  <p className="text-zinc-200 text-sm leading-relaxed mb-6 font-normal">
+                    &ldquo;Basekraft built our 14,000 sq.ft Worli penthouse with zero cost overruns. Their live client portal gave us absolute visibility on parametric material approvals and site milestones.&rdquo;
+                  </p>
+                </div>
+                <div className="flex items-center gap-3.5 pt-4 border-t border-white/[0.08]">
+                  <img src="/images/user-01.png" alt="Jane Doe" className="w-12 h-12 rounded-full border border-purple-500/40 object-cover" />
+                  <div>
+                    <h5 className="text-white text-sm font-bold">Jane Doe</h5>
+                    <p className="text-purple-300 text-xs font-mono">CEO, Fashionista</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Item 2 */}
+              <div className="features-box-border p-8 md:p-9 flex flex-col justify-between group">
+                <div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <svg width="28" height="22" viewBox="0 0 30 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 12.5L7.5 0H13.75L8.75 12.5H13.75V25H0V12.5ZM16.25 12.5L23.75 0H30L25 12.5H30V25H16.25V12.5Z" fill="url(#quote_grad_2)"/>
+                      <defs>
+                        <linearGradient id="quote_grad_2" x1="0" y1="0" x2="30" y2="25" gradientUnits="userSpaceOnUse">
+                          <stop offset="0" stopColor="#a073ee"/>
+                          <stop offset="1" stopColor="#6e25ed"/>
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="flex text-amber-400 text-xs">★★★★★</div>
+                  </div>
+                  <p className="text-zinc-200 text-sm leading-relaxed mb-6 font-normal">
+                    &ldquo;The Studio OS telemetry and parametric BOQ estimator eliminated our site contractor billing disputes. Our turnkey practice expanded from 2 to 9 simultaneous high-end sites seamlessly.&rdquo;
+                  </p>
+                </div>
+                <div className="flex items-center gap-3.5 pt-4 border-t border-white/[0.08]">
+                  <img src="/images/user-02.png" alt="John Smith" className="w-12 h-12 rounded-full border border-purple-500/40 object-cover" />
+                  <div>
+                    <h5 className="text-white text-sm font-bold">John Smith</h5>
+                    <p className="text-purple-300 text-xs font-mono">Founder, Foodies</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Item 3 */}
+              <div className="features-box-border p-8 md:p-9 flex flex-col justify-between group">
+                <div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <svg width="28" height="22" viewBox="0 0 30 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 12.5L7.5 0H13.75L8.75 12.5H13.75V25H0V12.5ZM16.25 12.5L23.75 0H30L25 12.5H30V25H16.25V12.5Z" fill="url(#quote_grad_3)"/>
+                      <defs>
+                        <linearGradient id="quote_grad_3" x1="0" y1="0" x2="30" y2="25" gradientUnits="userSpaceOnUse">
+                          <stop offset="0" stopColor="#a073ee"/>
+                          <stop offset="1" stopColor="#6e25ed"/>
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="flex text-amber-400 text-xs">★★★★★</div>
+                  </div>
+                  <p className="text-zinc-200 text-sm leading-relaxed mb-6 font-normal">
+                    &ldquo;The operational precision for architectural fit-outs created by Basekraft is unmatched. The telemetry is intuitive, snags are resolved in hours, and our clients rave about the experience.&rdquo;
+                  </p>
+                </div>
+                <div className="flex items-center gap-3.5 pt-4 border-t border-white/[0.08]">
+                  <img src="/images/user-03.png" alt="David Lee" className="w-12 h-12 rounded-full border border-purple-500/40 object-cover" />
+                  <div>
+                    <h5 className="text-white text-sm font-bold">David Lee</h5>
+                    <p className="text-purple-300 text-xs font-mono">Product Manager, SaaS Co.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================= */}
+        {/* 6. PRICING SECTION WITH COSMIC PLANET HORIZON BACKGROUND */}
+        {/* ========================================================= */}
+        <section id="pricing" className="relative overflow-hidden py-20 sm:py-28 isolate">
+          {/* Cosmic Horizon Background Layers (Behind the Content) */}
+          <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+            {/* Ambient Purple Blur Radiance */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-0">
+              <img src="/images/blur-13.svg" alt="blur" className="max-w-none opacity-80" />
+            </div>
+            <div className="absolute left-1/2 -translate-x-1/2 top-0">
+              <img src="/images/blur-14.svg" alt="blur" className="max-w-none opacity-90" />
+            </div>
+            <div className="absolute left-1/2 -translate-x-1/2 top-0">
+              <img src="/images/blur-15.svg" alt="blur" className="max-w-none" />
+            </div>
+
+            {/* Core Cosmic Violet Halo */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#6e25ed]/20 blur-[130px] rounded-full" />
+
+            {/* Radiant Curved Planet Horizon Arcs */}
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] rounded-t-full border-t border-purple-400/40 bg-gradient-to-b from-purple-950/20 to-transparent shadow-[0_-15px_60px_rgba(134,70,244,0.3)]" />
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[900px] h-[450px] rounded-t-full border-t border-purple-300/20" />
+
+            {/* Twinkling Star Field Particles */}
+            <div className="max-w-[482px] w-full h-60 overflow-hidden absolute top-4 left-1/2 -translate-x-1/2">
+              <div className="stars" />
+              <div className="stars2" />
+            </div>
+
+            {/* Vertical 8 Grid Bars with soft gradient borders */}
+            <div className="flex justify-center gap-4 sm:gap-8 absolute top-16 left-1/2 -translate-x-1/2 w-full opacity-40">
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border hidden sm:block" />
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border" />
+              <div className="max-w-[50px] w-full h-[220px] relative pricing-grid pricing-grid-border hidden sm:block" />
+            </div>
+          </div>
+
+          {/* Section Content (Sitting Proudly in Front of Background) */}
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-8 xl:px-0 relative z-10">
+            {/* Section Title */}
+            <div className="mb-16 text-center">
+              <div className="mb-4 inline-block">
+                <div className="hero-subtitle-gradient relative font-medium text-sm inline-flex items-center gap-2 py-2 px-5 rounded-full cursor-pointer hover:scale-105 transition-all duration-200 shadow-[0_0_24px_rgba(160,115,238,0.25)]">
                   <img src="/images/icon-title.svg" alt="icon" className="w-4 h-4" />
                   <span className="hero-subtitle-text font-semibold">Our Pricing</span>
                 </div>
