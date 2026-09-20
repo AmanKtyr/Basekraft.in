@@ -42,71 +42,60 @@ export function WebsiteFooter() {
             </div>
           </div>
 
-          {/* Column 3: Platform Modules */}
+          {/* Column 3: Main Navigation */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 font-mono">
+              Navigation
+            </h4>
+            <ul className="space-y-2 text-xs text-zinc-400">
+              <li>
+                <Link href="/" className="hover:text-white transition">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-white transition">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="hover:text-white transition">
+                  Price
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-white transition">
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Studio Platform */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 font-mono">
               Studio Platform
             </h4>
             <ul className="space-y-2 text-xs text-zinc-400">
               <li>
-                <Link href="/features" className="hover:text-white transition">
-                  Dynamic BOQ Matrix
-                </Link>
-              </li>
-              <li>
-                <Link href="/client-portal/P-619" target="_blank" className="hover:text-white transition">
-                  Client Live Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/features" className="hover:text-white transition">
-                  Architectural CRM & Leads
-                </Link>
-              </li>
-              <li>
-                <Link href="/features" className="hover:text-white transition">
-                  Materials Master Catalog
-                </Link>
-              </li>
-              <li>
-                <Link href="/quotes" className="hover:text-white transition inline-flex items-center gap-1">
-                  <span>Proposal Letterheads</span>
-                  <ArrowUpRight className="w-2.5 h-2.5 text-zinc-400" />
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 4: Works & Portfolio */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 font-mono">
-              Showcase Works
-            </h4>
-            <ul className="space-y-2 text-xs text-zinc-400">
-              <li>
-                <Link href="/portfolio" className="hover:text-white transition">
-                  The Skydeck Penthouse
-                </Link>
-              </li>
-              <li>
-                <Link href="/portfolio" className="hover:text-white transition">
-                  Oberoi Forest Villa
-                </Link>
-              </li>
-              <li>
-                <Link href="/portfolio" className="hover:text-white transition">
-                  Monolith Tech HQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/portfolio" className="hover:text-white transition">
-                  Dr. Mehta Dental Studio
+                <Link href="/login" className="hover:text-white transition">
+                  Studio OS Multi-Login
                 </Link>
               </li>
               <li>
                 <Link href="/client-portal/P-619" target="_blank" className="hover:text-white transition inline-flex items-center gap-1">
-                  <span>Live Client Portal Demo</span>
+                  <span>Client Live Portal</span>
                   <ArrowUpRight className="w-2.5 h-2.5 text-zinc-400" />
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-white transition">
+                  Book Practice Discovery
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="hover:text-white transition">
+                  Commercial Studio Tiers
                 </Link>
               </li>
             </ul>

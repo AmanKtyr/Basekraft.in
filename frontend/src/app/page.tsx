@@ -334,10 +334,10 @@ export default function RootWebsiteHomePage() {
                 {/* Direct feature link */}
                 <div className="pt-4 border-t border-white/[0.08] flex items-center justify-between">
                   <Link
-                    href="/features"
+                    href="/about"
                     className="text-xs font-bold text-purple-300 hover:text-purple-200 hover:underline flex items-center gap-1.5 transition"
                   >
-                    <span>Read full specifications</span>
+                    <span>Read studio philosophy</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                   <Link
@@ -590,10 +590,10 @@ export default function RootWebsiteHomePage() {
               </p>
             </div>
             <Link
-              href="/portfolio"
+              href="/contact"
               className="button-border-gradient px-4 py-2.5 text-xs font-bold rounded-lg text-zinc-200 hover:text-white transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
             >
-              <span>View All 5 Works</span>
+              <span>Inquire For Project Showcase</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
