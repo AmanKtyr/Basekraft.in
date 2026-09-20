@@ -1,80 +1,266 @@
 @import "tailwindcss";
 
 :root {
-  /* Minimal B&W Architectural Design System */
-  --background: #ffffff;
-  --foreground: #09090b;
-  
-  --surface: #fafafa;
-  --surface-hover: #f4f4f5;
-  --surface-active: #e4e4e7;
-  
-  --border: #e4e4e7;
-  --border-subtle: #f4f4f5;
-  --border-strong: #09090b;
-  
-  --primary: #09090b;
-  --primary-foreground: #ffffff;
-  
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  
-  --accent: #09090b;
-  --accent-foreground: #ffffff;
-
-  --card: #ffffff;
-  --card-foreground: #09090b;
-  --card-border: #e4e4e7;
-
-  --radius: 0.5rem;
-}
-
-.dark {
-  --background: #09090b;
+  --background: #030014;
   --foreground: #f4f4f5;
   
-  --surface: #121215;
-  --surface-hover: #18181b;
-  --surface-active: #27272a;
+  --surface: #0a061e;
+  --surface-hover: #120c30;
+  --surface-active: #1d1448;
   
-  --border: #27272a;
-  --border-subtle: #18181b;
-  --border-strong: #fafafa;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-strong: rgba(255, 255, 255, 0.2);
   
-  --primary: #fafafa;
-  --primary-foreground: #09090b;
+  --primary: #a073ee;
+  --primary-foreground: #ffffff;
   
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
+  --muted: #0d0824;
+  --muted-foreground: #94a3b8;
   
-  --accent: #fafafa;
-  --accent-foreground: #09090b;
+  --accent: #6e25ed;
+  --accent-foreground: #ffffff;
 
-  --card: #121215;
+  --card: rgba(14, 9, 36, 0.7);
   --card-foreground: #f4f4f5;
-  --card-border: #27272a;
+  --card-border: rgba(255, 255, 255, 0.08);
+
+  --radius: 0.75rem;
+}
+
+* {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  background-color: #030014;
+  color: #f4f4f5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Custom scrollbar for sleek minimalist interface */
+h1, h2, h3 {
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+
+/* Custom scrollbar for sleek dark tech interface */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #030014;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(113, 113, 122, 0.25);
+  background: rgba(160, 115, 238, 0.3);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(113, 113, 122, 0.45);
+  background: rgba(160, 115, 238, 0.55);
+}
+
+/* ========================================================================= */
+/* AUTHENTIC HELYONEX COSMIC DARK DESIGN SYSTEM */
+/* ========================================================================= */
+
+/* Concentric Ambient Circles behind Hero */
+.hero-circle-gradient {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  position: relative;
+}
+.hero-circle-gradient:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Subtitle Shimmer Pill with Sparkle Icon */
+.hero-subtitle-gradient {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 24px -2px rgba(134, 70, 244, 0.25);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hero-subtitle-gradient:hover {
+  box-shadow: inset 0 -7px 11px rgba(164, 143, 255, 0.25), 0 0 28px rgba(134, 70, 244, 0.4);
+  border-color: rgba(229, 156, 255, 0.35);
+  transform: translateY(-1px);
+}
+.hero-subtitle-text {
+  background: linear-gradient(90deg, #e59cff 14.54%, #ba9cff 43.76%, #9cb2ff 90.94%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Vibrant Primary CTA Button */
+.hero-button-gradient {
+  box-shadow: 0px -3px 10px 0px rgba(0, 0, 0, 0.35) inset, 0 8px 24px -4px rgba(110, 37, 237, 0.5);
+  background: linear-gradient(180deg, #a073ee -11.11%, #6e25ed 100%);
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hero-button-gradient:hover {
+  background: linear-gradient(180deg, #ad83f3 -11.11%, #7932f3 100%);
+  box-shadow: 0px -3px 10px 0px rgba(0, 0, 0, 0.35) inset, 0 12px 32px -2px rgba(110, 37, 237, 0.7);
+  transform: translateY(-1px);
+}
+
+/* Secondary Button with Shimmer Border */
+.button-border-gradient {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  transition: all 0.25s ease;
+}
+.button-border-gradient:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(160, 115, 238, 0.45);
+  box-shadow: 0 0 20px -3px rgba(160, 115, 238, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Navigation Pill */
+.nav-gradient {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 10.51%, rgba(255, 255, 255, 0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* Circular Icon Pods */
+.icon-border {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 16px rgba(134, 70, 244, 0.12);
+  transition: all 0.3s ease;
+}
+.icon-border:hover {
+  border-color: rgba(160, 115, 238, 0.45);
+  box-shadow: inset 0 0 20px rgba(134, 70, 244, 0.25), 0 0 15px rgba(134, 70, 244, 0.2);
+}
+
+/* Card Hover Flare */
+.features-bg {
+  background: radial-gradient(circle at 50% 0%, rgba(134, 70, 244, 0.18) 0%, rgba(255, 255, 255, 0) 70%);
+  transition: opacity 0.35s ease;
+}
+
+/* Subtle Gradient Row Separator */
+.features-row-border {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
+}
+
+/* Cosmic Planet Dome Arch (from Screenshot 1) */
+.pricing-circle {
+  background-color: #030014;
+  position: relative;
+}
+.pricing-circle:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 28.19%);
+}
+
+.pricing-grid {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.06) 100%);
+  opacity: 0.35;
+}
+.pricing-grid-border {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pricing-item-border {
+  position: relative;
+  background: #06031b;
+}
+.pricing-item-border:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 1;
+  background: linear-gradient(47deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+.pricing-gradient-text {
+  background: linear-gradient(0deg, #e59cff 0.01%, #ba9cff 50.01%, #9cb2ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pricing-gradient-divider {
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.12) 49.48%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Star dust particle background */
+@keyframes animStar {
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(-2000px);
+  }
+}
+
+.stars {
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  animation: animStar 60s linear infinite;
+  box-shadow: 779px 1331px #fff, 324px 42px #fff, 303px 586px #fff,
+    1312px 276px #fff, 451px 625px #fff, 521px 1931px #fff, 1087px 1871px #fff,
+    36px 1546px #fff, 132px 934px #fff, 1698px 901px #fff, 1418px 664px #fff,
+    1448px 1157px #fff, 1084px 232px #fff, 347px 1776px #fff, 1722px 243px #fff,
+    1629px 835px #fff, 479px 969px #fff, 1231px 960px #fff, 586px 384px #fff,
+    696px 1654px #fff, 1144px 60px #fff;
+}
+
+.stars2 {
+  width: 2px;
+  height: 2px;
+  background: transparent;
+  animation: animStar 120s linear infinite;
+  box-shadow: 1448px 320px #fff, 1775px 1663px #fff, 332px 1364px #fff,
+    878px 340px #fff, 569px 1832px #fff, 1422px 1684px #fff, 1946px 1907px #fff,
+    121px 979px #fff, 1044px 1069px #fff, 463px 381px #fff, 423px 112px #fff,
+    523px 1179px #fff, 779px 654px #fff, 1398px 694px #fff, 1085px 1464px #fff,
+    1599px 1869px #fff, 801px 1882px #fff, 779px 1231px #fff, 552px 932px #fff,
+    986px 1529px #fff, 1667px 1137px #fff;
+}
+
+/* Glassmorphic Card Surface */
+.glass-card {
+  background: rgba(13, 8, 32, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card:hover {
+  border-color: rgba(160, 115, 238, 0.4);
+  box-shadow: 0 16px 40px -12px rgba(110, 37, 237, 0.3);
+  transform: translateY(-2px);
 }

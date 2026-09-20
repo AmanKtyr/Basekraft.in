@@ -21,10 +21,13 @@ import {
   AlertCircle,
   Laptop,
   Menu,
+  Crown,
+  Globe,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { initialProjects } from "@/data/mockData";
+import { useAuth, UserRole } from "@/context/AuthContext";
 
 interface TopNavProps {
   onOpenNewProject?: () => void;
@@ -82,6 +85,7 @@ const initialNotifications: NotificationItem[] = [
 
 export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
   const router = useRouter();
+  const { user, role, switchRole, logout } = useAuth();
   const [isDark, setIsDark] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -349,16 +353,16 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
           >
             {/* User Avatar Circle */}
             <div className="w-7 h-7 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold text-xs flex items-center justify-center shrink-0">
-              AK
+              {user.avatar || user.name.slice(0, 2).toUpperCase()}
             </div>
 
             {/* Name and Designation */}
             <div className="hidden md:block text-left">
               <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
-                Ar. Aman Katyar
+                {user.name}
               </div>
               <div className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-tight">
-                Principal Architect
+                {user.roleTitle}
               </div>
             </div>
 
@@ -367,19 +371,118 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
 
           {/* User Profile Dropdown Menu */}
           {isUserMenuOpen && (
-            <div className="absolute right-0 top-11 w-60 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1.5 z-50 animate-in fade-in-50 zoom-in-95 duration-100 text-xs">
+            <div className="absolute right-0 top-11 w-64 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1.5 z-50 animate-in fade-in-50 zoom-in-95 duration-100 text-xs">
               {/* Account Info Header */}
               <div className="px-3.5 py-2.5 border-b border-zinc-100 dark:border-zinc-900">
                 <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-xs">
-                  Ar. Aman Katyar
+                  {user.name}
                 </div>
                 <div className="text-[11px] text-zinc-500 font-mono">
-                  aman@basekraft.in
+                  {user.email}
                 </div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 font-medium">
-                    Studio Founder • Admin
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold">
+                    {user.roleTitle}
                   </span>
+                </div>
+              </div>
+
+              {/* Master Superadmin Link (if superadmin) */}
+              <div className="py-1 border-b border-zinc-100 dark:border-zinc-900">
+                <Link
+                  href="/superadmin"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="px-3.5 py-2 flex items-center justify-between text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 font-semibold transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-3.5 h-3.5" />
+                    <span>Superadmin Portal</span>
+                  </div>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
+                </Link>
+
+                <Link
+                  href="/"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="px-3.5 py-2 flex items-center justify-between text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Public Studio Website</span>
+                  </div>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
+                </Link>
+              </div>
+
+              {/* Quick Role Switcher */}
+              <div className="py-2 px-3.5 border-b border-zinc-100 dark:border-zinc-900">
+                <span className="text-[10px] uppercase font-mono text-zinc-400 block mb-1.5">
+                  Quick Switch Role
+                </span>
+                <div className="grid grid-cols-2 gap-1 font-mono text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole("superadmin");
+                      setIsUserMenuOpen(false);
+                      router.push("/superadmin");
+                    }}
+                    className={`p-1 rounded text-left border ${
+                      role === "superadmin"
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
+                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    }`}
+                  >
+                    Superadmin
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole("studio_admin");
+                      setIsUserMenuOpen(false);
+                      router.push("/dashboard");
+                    }}
+                    className={`p-1 rounded text-left border ${
+                      role === "studio_admin"
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
+                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    }`}
+                  >
+                    Studio Admin
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole("architect");
+                      setIsUserMenuOpen(false);
+                      router.push("/dashboard");
+                    }}
+                    className={`p-1 rounded text-left border ${
+                      role === "architect"
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
+                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    }`}
+                  >
+                    Architect
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole("client");
+                      setIsUserMenuOpen(false);
+                      router.push("/client-portal/P-619");
+                    }}
+                    className={`p-1 rounded text-left border ${
+                      role === "client"
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
+                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    }`}
+                  >
+                    Client Portal
+                  </button>
                 </div>
               </div>
 
@@ -411,18 +514,6 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
                   <Clock className="w-3.5 h-3.5 text-zinc-400" />
                   <span>My Billable Timesheets</span>
                 </Link>
-
-                <Link
-                  href="/client-portal/P-619"
-                  onClick={() => setIsUserMenuOpen(false)}
-                  className="px-3.5 py-2 flex items-center justify-between text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <Laptop className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Client Portal Preview</span>
-                  </div>
-                  <ExternalLink className="w-3 h-3 text-zinc-400" />
-                </Link>
               </div>
 
               {/* Theme Toggle within Menu */}
@@ -430,7 +521,7 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
                 <button
                   type="button"
                   onClick={toggleTheme}
-                  className="w-full text-left px-3.5 py-2 flex items-center justify-between text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
+                  className="w-full text-left px-3.5 py-2 flex items-center justify-between text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     {isDark ? <Sun className="w-3.5 h-3.5 text-zinc-400" /> : <Moon className="w-3.5 h-3.5 text-zinc-400" />}
@@ -446,12 +537,12 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
                   type="button"
                   onClick={() => {
                     setIsUserMenuOpen(false);
-                    alert("Signing out of Basekraft Studio...");
+                    logout();
                   }}
-                  className="w-full text-left px-3.5 py-2 flex items-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition font-medium"
+                  className="w-full text-left px-3.5 py-2 flex items-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition font-medium cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5 text-red-500" />
-                  <span>Log out of Basekraft</span>
+                  <span>Sign out to Login Portal</span>
                 </button>
               </div>
             </div>

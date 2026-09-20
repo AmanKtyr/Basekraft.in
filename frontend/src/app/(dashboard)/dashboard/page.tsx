@@ -13,10 +13,14 @@ import {
   FileText,
   Sparkles,
   ArrowRight,
+  Globe,
+  Building2,
 } from "lucide-react";
 import { initialProjects, mockPaymentRequests } from "@/data/mockData";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardOverview() {
+  const { user, role } = useAuth();
   const totalValue = initialProjects.reduce((acc, p) => acc + p.budget, 0);
   const totalSpent = initialProjects.reduce((acc, p) => acc + p.spent, 0);
 
@@ -28,9 +32,17 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Studio Header */}
+      {/* Studio Header & Role Indicator */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold">
+              {user.roleTitle}
+            </span>
+            <span className="text-xs text-zinc-400 font-mono">
+              • {user.studioName}
+            </span>
+          </div>
           <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Executive Studio Dashboard
           </h1>
@@ -39,6 +51,13 @@ export default function DashboardOverview() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Public Website</span>
+          </Link>
           <Link
             href="/projects"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 text-xs font-medium hover:opacity-90 transition"
