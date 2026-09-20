@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -27,6 +27,28 @@ import {
   Info,
   CheckCircle2,
   Trash2,
+  Download,
+  Filter,
+  FileSpreadsheet,
+  MoreVertical,
+  ExternalLink,
+  Pencil,
+  AlertCircle,
+  Clock,
+  Briefcase,
+  Phone,
+  Mail,
+  MapPin,
+  X,
+  Wrench,
+  Lightbulb,
+  Calendar,
+  Share2,
+  Sliders,
+  ToggleLeft,
+  ToggleRight,
+  Zap,
+  ShieldAlert,
 } from "lucide-react";
 
 type SettingsTab =
@@ -42,7 +64,11 @@ type SettingsTab =
   | "manpower"
   | "vendors"
   | "users"
-  | "permissions";
+  | "permissions"
+  | "configuration"
+  | "automation"
+  | "hrPolicies"
+  | "integrations";
 
 interface NavItem {
   id: SettingsTab;
@@ -52,7 +78,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: "subscription", label: "Subscription", icon: CreditCard, badge: "Pro" },
+  { id: "subscription", label: "Subscription", icon: CreditCard, badge: "9 Seats" },
   { id: "organizationDetails", label: "Organization Details", icon: Building2 },
   { id: "listingPage", label: "Listing Page", icon: Globe },
   { id: "aiProCredit", label: "AI Pro Credit", icon: Sparkles, badge: "4,850" },
@@ -63,8 +89,12 @@ const navItems: NavItem[] = [
   { id: "activity", label: "Activity", icon: Activity },
   { id: "manpower", label: "Manpower", icon: HardHat },
   { id: "vendors", label: "Vendors", icon: Truck },
-  { id: "users", label: "Users", icon: Users, badge: "8" },
+  { id: "users", label: "Users", icon: Users, badge: "7" },
   { id: "permissions", label: "Permissions", icon: ShieldCheck },
+  { id: "configuration", label: "Configuration", icon: Wrench },
+  { id: "automation", label: "Automation", icon: Lightbulb, badge: "5 Rules" },
+  { id: "hrPolicies", label: "HR & Policies", icon: Calendar },
+  { id: "integrations", label: "Integrations", icon: Share2, badge: "Connected" },
 ];
 
 function SettingsContent() {
@@ -72,6 +102,11 @@ function SettingsContent() {
   const initialTab = (searchParams.get("tab") as SettingsTab) || "organizationDetails";
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Sub-tabs states
+  const [materialsSubTab, setMaterialsSubTab] = useState<"all" | "rateContracts">("all");
+  const [vendorSubTab, setVendorSubTab] = useState<"all" | "active" | "inactive" | "blacklist">("all");
+  const [userSubTab, setUserSubTab] = useState<"internal" | "clients" | "vendors">("internal");
 
   // Organization Details State
   const [isEditingCompany, setIsEditingCompany] = useState(false);
@@ -101,6 +136,246 @@ function SettingsContent() {
     udyamNumber: "UDYAM-HR-05-0039210",
   });
 
+  // HR Holidays Calendar State
+  const [holidaysList, setHolidaysList] = useState([
+    { id: "h-1", date: "26 Jan 2026", name: "Republic Day", day: "Monday", siteStatus: "All Sites Closed" },
+    { id: "h-2", date: "04 Mar 2026", name: "Holi Festival", day: "Wednesday", siteStatus: "All Sites Closed" },
+    { id: "h-3", date: "21 Mar 2026", name: "Eid-ul-Fitr", day: "Saturday", siteStatus: "All Sites Closed" },
+    { id: "h-4", date: "15 Aug 2026", name: "Independence Day", day: "Saturday", siteStatus: "All Sites Closed" },
+    { id: "h-5", date: "02 Oct 2026", name: "Gandhi Jayanti", day: "Friday", siteStatus: "All Sites Closed" },
+    { id: "h-6", date: "10 Nov 2026", name: "Diwali & Deepawali", day: "Tuesday", siteStatus: "All Sites Closed" },
+    { id: "h-7", date: "25 Dec 2026", name: "Christmas", day: "Friday", siteStatus: "All Sites Closed" },
+  ]);
+  const [isAddHolidayModalOpen, setIsAddHolidayModalOpen] = useState(false);
+  const [newHolidayName, setNewHolidayName] = useState("");
+  const [newHolidayDate, setNewHolidayDate] = useState("2026-10-02");
+  const [newHolidayStatus, setNewHolidayStatus] = useState("All Sites Closed");
+
+  // Integrations State (WhatsApp & Razorpay)
+  const [whatsappConfig, setWhatsappConfig] = useState({
+    isConnected: true,
+    phoneNumberId: "108291049281023",
+    wabaId: "928104829104812",
+    accessToken: "EAABwz84920194829104812903",
+    senderPhone: "+91 98101 22345",
+  });
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [waTestFeedback, setWaTestFeedback] = useState<string | null>(null);
+
+  const [razorpayConfig, setRazorpayConfig] = useState({
+    isConnected: true,
+    mode: "live" as "live" | "test",
+    keyId: "rzp_live_Basekraft99",
+    keySecret: "••••••••••••••••••••",
+    merchantName: "Basekraft Infra Private Limited",
+    webhookSecret: "whsec_984102948129",
+  });
+  const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
+  const [rzpTestFeedback, setRzpTestFeedback] = useState<string | null>(null);
+
+  // Master Items Data
+  const [itemMasterList, setItemMasterList] = useState([
+    {
+      id: "itm-1",
+      createdOn: "19 Sep 2026",
+      name: "Wooden Fluted Wall Partition",
+      description: "Charcoal fluted louvers with concealed acoustic backing & aluminum channels",
+      clientRate: 1450,
+      purchaseRate: 980,
+      uom: "SQFT",
+      gst: 18,
+      tag: "Carpentry - Partitions",
+    },
+    {
+      id: "itm-2",
+      createdOn: "19 Sep 2026",
+      name: "Modular Kitchen Carcass Package",
+      description: "18mm Marine BWP ply with 2mm PVC edge banding & Hafele soft-close hardware",
+      clientRate: 2600,
+      purchaseRate: 1850,
+      uom: "SQFT",
+      gst: 18,
+      tag: "Modular Kitchen",
+    },
+    {
+      id: "itm-3",
+      createdOn: "18 Sep 2026",
+      name: "550W Mono PERC Solar PV Panel",
+      description: "Tier-1 bifacial high-efficiency solar module with 25-yr linear warranty",
+      clientRate: 18500,
+      purchaseRate: 14200,
+      uom: "Nos",
+      gst: 12,
+      tag: "Solar EPC",
+    },
+    {
+      id: "itm-4",
+      createdOn: "17 Sep 2026",
+      name: "Panel Light & Cove Light Supply",
+      description: "Trimless architectural COB warm white 3000K recessed ceiling light fixtures",
+      clientRate: 1250,
+      purchaseRate: 780,
+      uom: "Nos",
+      gst: 18,
+      tag: "Electrical",
+    },
+    {
+      id: "itm-5",
+      createdOn: "15 Sep 2026",
+      name: "Italian Marble Flooring & Polish",
+      description: "Statuario / Dyna marble dry cladding with diamond pad mirror polishing",
+      clientRate: 1850,
+      purchaseRate: 1280,
+      uom: "SQFT",
+      gst: 18,
+      tag: "Civil - Flooring",
+    },
+  ]);
+
+  // Master Manpower Roles (ProjectStudio reference)
+  const [manpowerRoles, setManpowerRoles] = useState([
+    { id: "mp-1", name: "Snag List / Handover Team", count: 4, dailyWage: 950, trade: "Finishing & Snagging", status: "Active" },
+    { id: "mp-2", name: "Quality Control Inspector", count: 2, dailyWage: 1600, trade: "Engineering & QA", status: "Active" },
+    { id: "mp-3", name: "Safety Officer", count: 1, dailyWage: 1400, trade: "EHS & Compliance", status: "Active" },
+    { id: "mp-4", name: "Scaffolding Team", count: 6, dailyWage: 850, trade: "Civil & Façade", status: "Active" },
+    { id: "mp-5", name: "Security / Watchman", count: 3, dailyWage: 700, trade: "Site Security", status: "Active" },
+    { id: "mp-6", name: "Pest Control Agency", count: 2, dailyWage: 1200, trade: "Pre-construction", status: "Active" },
+    { id: "mp-7", name: "Wardrobe Installer", count: 5, dailyWage: 1100, trade: "Modular Millwork", status: "Active" },
+    { id: "mp-8", name: "Modular Kitchen Installer", count: 4, dailyWage: 1150, trade: "Modular Millwork", status: "Active" },
+    { id: "mp-9", name: "Polishing Specialist", count: 3, dailyWage: 1050, trade: "Veneer & PU Polish", status: "Active" },
+    { id: "mp-10", name: "Wallpaper Installer", count: 2, dailyWage: 1000, trade: "Wall Finishes", status: "Active" },
+  ]);
+
+  // Master Vendors (ProjectStudio reference)
+  const [vendorsList, setVendorsList] = useState([
+    {
+      id: "v-1",
+      code: "BKVR-001",
+      displayName: "CenturyPly Distribution Hub",
+      legalName: "Century Plyboards (India) Limited",
+      pan: "AAACC2910P",
+      gst: "07AAACC2910P1Z4",
+      phone: "+91 98110 44210",
+      city: "New Delhi",
+      type: "Timber & Plywood",
+      status: "Active",
+      outstanding: "₹3,45,000",
+    },
+    {
+      id: "v-2",
+      code: "BKVR-002",
+      displayName: "Hafele Architectural Depot",
+      legalName: "Hafele India Private Limited",
+      pan: "AABCH1092Q",
+      gst: "27AABCH1092Q1ZV",
+      phone: "+91 98200 88412",
+      city: "Mumbai",
+      type: "Hardware & Fittings",
+      status: "Active",
+      outstanding: "₹1,20,000",
+    },
+    {
+      id: "v-3",
+      code: "BKVR-003",
+      displayName: "Waaree Solar EPC Supplies",
+      legalName: "Waaree Energies Limited",
+      pan: "AAACW2948K",
+      gst: "24AAACW2948K1Z3",
+      phone: "+91 98790 33190",
+      city: "Surat",
+      type: "Solar PV Modules",
+      status: "Active",
+      outstanding: "₹4,20,000",
+    },
+    {
+      id: "v-4",
+      code: "BKVR-004",
+      displayName: "UltraTech RMC Concrete",
+      legalName: "UltraTech Cement Limited",
+      pan: "AAACU0391A",
+      gst: "06AAACU0391A1ZB",
+      phone: "+91 99100 55432",
+      city: "Gurugram",
+      type: "Ready-Mix Concrete",
+      status: "Active",
+      outstanding: "₹0",
+    },
+  ]);
+
+  // Master Users (ProjectStudio reference)
+  const [usersList, setUsersList] = useState([
+    {
+      id: "u-1",
+      name: "Ar. Aman Katyar",
+      email: "aman@basekraft.in",
+      phone: "+91 98101 22345",
+      joiningDate: "01 May 2026",
+      role: "Studio Principal (Admin)",
+      permissions: ["Can change project stage", "BOQ Margins", "Bank Ledger", "Clients"],
+      status: "Active",
+    },
+    {
+      id: "u-2",
+      name: "Rohan Malhotra",
+      email: "rohan@basekraft.in",
+      phone: "+91 98204 55120",
+      joiningDate: "15 May 2026",
+      role: "Project Director",
+      permissions: ["Can change project stage", "Approve POs", "Site Snag Sign-off"],
+      status: "Active",
+    },
+    {
+      id: "u-3",
+      name: "Ananya Deshmukh",
+      email: "ananya@basekraft.in",
+      phone: "+91 99301 77812",
+      joiningDate: "01 Jun 2026",
+      role: "Lead Architect & Designer",
+      permissions: ["Moodboard", "3D Concepts", "Drawings"],
+      status: "Active",
+    },
+    {
+      id: "u-4",
+      name: "Vikram Mehta",
+      email: "vikram@basekraft.in",
+      phone: "+91 98114 99014",
+      joiningDate: "10 Jun 2026",
+      role: "Solar EPC Lead Engineer",
+      permissions: ["Solar Net-Metering", "DISCOM Filings", "Site Inverters"],
+      status: "Active",
+    },
+    {
+      id: "u-5",
+      name: "Pooja Hegde",
+      email: "pooja@basekraft.in",
+      phone: "+91 98402 33419",
+      joiningDate: "20 Jun 2026",
+      role: "Procurement & Cost Estimator",
+      permissions: ["PO Issuance", "Vendor Ledger", "Item Master"],
+      status: "Active",
+    },
+    {
+      id: "u-6",
+      name: "Amit Verma",
+      email: "amit@basekraft.in",
+      phone: "+91 97110 88204",
+      joiningDate: "01 Jul 2026",
+      role: "Site Supervisor",
+      permissions: ["Daily Logs", "Labor Attendance", "Snagging"],
+      status: "Active",
+    },
+    {
+      id: "u-7",
+      name: "Neha Sundaram",
+      email: "neha@basekraft.in",
+      phone: "+91 98221 66509",
+      joiningDate: "15 Jul 2026",
+      role: "Client Relations Manager",
+      permissions: ["Client Handover", "Reviews", "Portal Support"],
+      status: "Active",
+    },
+  ]);
+
   const filteredNavItems = navItems.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -114,7 +389,7 @@ function SettingsContent() {
             Studio Settings & Master Controls
           </h1>
           <p className="text-xs text-zinc-500">
-            Configure legal identity, billing, multi-sector master catalogs, and team access
+            Workspace configuration, seat allocations, multi-sector master catalogs, and access permissions
           </p>
         </div>
 
@@ -163,7 +438,7 @@ function SettingsContent() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-medium transition ${
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-medium transition cursor-pointer ${
                     isActive
                       ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 font-semibold shadow-xs"
                       : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
@@ -208,7 +483,7 @@ function SettingsContent() {
                   </div>
                   <button
                     onClick={() => setIsEditingCompany(!isEditingCompany)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition shadow-xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition shadow-xs cursor-pointer"
                   >
                     {isEditingCompany ? (
                       <>
@@ -320,7 +595,7 @@ function SettingsContent() {
                   </div>
                   <button
                     onClick={() => setIsEditingAddress(!isEditingAddress)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition shadow-xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition shadow-xs cursor-pointer"
                   >
                     {isEditingAddress ? (
                       <>
@@ -418,7 +693,7 @@ function SettingsContent() {
                   </div>
                   <button
                     onClick={() => setIsEditingBank(!isEditingBank)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition shadow-xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition shadow-xs cursor-pointer"
                   >
                     {isEditingBank ? (
                       <>
@@ -483,54 +758,664 @@ function SettingsContent() {
             </div>
           )}
 
-          {/* TAB 2: Subscription */}
+          {/* TAB 2: Subscription (Matching ProjectStudio subscription structure) */}
           {activeTab === "subscription" && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-                      Basekraft Enterprise Tier
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      Active
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    Billed annually (Next billing cycle: 15 October 2026)
-                  </p>
+            <div className="space-y-6">
+              {/* Top 6 KPI Metric Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 shadow-xs">
+                  <span className="text-zinc-400 text-[10px] uppercase font-mono block">Subscription Type</span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 mt-1 block">Per Seats</span>
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100 font-mono">₹14,999 / mo</div>
-                  <span className="text-[11px] text-zinc-500">15 Dedicated Seats Included</span>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 shadow-xs">
+                  <span className="text-zinc-400 text-[10px] uppercase font-mono block">Start Date</span>
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1 block">May 01, 2026</span>
+                </div>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 shadow-xs">
+                  <span className="text-zinc-400 text-[10px] uppercase font-mono block">End Date</span>
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1 block">May 01, 2027</span>
+                </div>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 shadow-xs">
+                  <span className="text-zinc-400 text-[10px] uppercase font-mono block">Days Left</span>
+                  <span className="font-bold text-emerald-600 mt-1 block font-mono">224 Days</span>
+                </div>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 shadow-xs">
+                  <span className="text-zinc-400 text-[10px] uppercase font-mono block">Total Seats</span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 mt-1 block font-mono">9 Seats</span>
+                </div>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 shadow-xs">
+                  <span className="text-zinc-400 text-[10px] uppercase font-mono block">Seats Used</span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 mt-1 block font-mono">7 Seats</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 space-y-1">
-                  <span className="text-xs text-zinc-500">Seats In Use</span>
-                  <div className="text-base font-bold text-zinc-900 dark:text-zinc-100">8 / 15 Seats</div>
-                  <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-zinc-900 dark:bg-zinc-100 h-full w-[53%]" />
+              {/* Action Banner */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 flex items-center justify-between shadow-xs">
+                <div>
+                  <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Need Additional Team Access?</h4>
+                  <p className="text-xs text-zinc-500">Expand concurrent project directors, site supervisors, and 3D visualizers</p>
+                </div>
+                <button
+                  onClick={() => alert("Initiating seat expansion checkout...")}
+                  className="px-3.5 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs font-semibold rounded-md shadow-xs hover:opacity-90"
+                >
+                  Buy More Seats
+                </button>
+              </div>
+
+              {/* Consumed Projects Section (Exact Match) */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    Consumed Projects (4 Active)
+                  </h3>
+                  <span className="text-xs text-zinc-500 font-mono">Unlimited Multi-Sector Quota</span>
+                </div>
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-md overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[11px]">
+                      <tr>
+                        <th className="p-2.5">Project Code</th>
+                        <th className="p-2.5">Project Name</th>
+                        <th className="p-2.5">Sector</th>
+                        <th className="p-2.5">Activation Date</th>
+                        <th className="p-2.5 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                      <tr>
+                        <td className="p-2.5 font-mono font-bold">P-438</td>
+                        <td className="p-2.5 font-medium">Oberoi Forest Villa</td>
+                        <td className="p-2.5 text-zinc-500">Interior Design</td>
+                        <td className="p-2.5 font-mono text-zinc-500">01 May 2026</td>
+                        <td className="p-2.5 text-right"><span className="text-emerald-600 font-medium">Active</span></td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-mono font-bold">P-619</td>
+                        <td className="p-2.5 font-medium">The Skydeck Penthouse</td>
+                        <td className="p-2.5 text-zinc-500">Solar EPC</td>
+                        <td className="p-2.5 font-mono text-zinc-500">12 May 2026</td>
+                        <td className="p-2.5 text-right"><span className="text-emerald-600 font-medium">Active</span></td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-mono font-bold">P-593</td>
+                        <td className="p-2.5 font-medium">Mittal Luxury Residence</td>
+                        <td className="p-2.5 text-zinc-500">Modular Furniture</td>
+                        <td className="p-2.5 font-mono text-zinc-500">04 Jun 2026</td>
+                        <td className="p-2.5 text-right"><span className="text-emerald-600 font-medium">Active</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Payment History */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-3">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  Payment History & Tax Invoices
+                </h3>
+                <div className="p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100 font-mono">₹57,000.00 SUCCESS</span>
+                    <p className="text-zinc-500 text-[11px]">Billed for 6 Seats Renewal on May 1, 2026 • Invoice #INV-2026-904</p>
                   </div>
-                </div>
-
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 space-y-1">
-                  <span className="text-xs text-zinc-500">Multi-Sector Workspaces</span>
-                  <div className="text-base font-bold text-zinc-900 dark:text-zinc-100">Unlimited</div>
-                  <span className="text-[10px] text-zinc-400">Solar, Interiors, Civil, Furniture</span>
-                </div>
-
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 space-y-1">
-                  <span className="text-xs text-zinc-500">AI Estimation Tokens</span>
-                  <div className="text-base font-bold text-zinc-900 dark:text-zinc-100">4,850 Remaining</div>
-                  <span className="text-[10px] text-zinc-400">Auto-refills monthly</span>
+                  <button className="flex items-center gap-1 text-[11px] px-2.5 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded hover:bg-zinc-100">
+                    <Download className="w-3 h-3" /> Download GST Invoice
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 3: Listing Page */}
+          {/* TAB 3: Item Master (Exact Match with ProjectStudio) */}
+          {activeTab === "itemMaster" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    Item Master Catalog
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Reusable item definitions, standard billing vs. purchase rates, UOM, and GST brackets
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => alert("Exporting Item Master Excel sheet...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Export Excel</span>
+                  </button>
+                  <button
+                    onClick={() => alert("Opening Add Item modal...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold hover:opacity-90 shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Item</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Data Table with Column Search Filters */}
+              <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-md">
+                <table className="w-full text-xs text-left min-w-[700px]">
+                  <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[11px]">
+                    <tr>
+                      <th className="p-2.5">Created On</th>
+                      <th className="p-2.5">Name</th>
+                      <th className="p-2.5">Description</th>
+                      <th className="p-2.5 text-right">Client Rate</th>
+                      <th className="p-2.5 text-right">Purchase Rate</th>
+                      <th className="p-2.5 text-center">UOM</th>
+                      <th className="p-2.5 text-center">GST</th>
+                      <th className="p-2.5">Tag</th>
+                      <th className="p-2.5 text-center w-16">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200">
+                    {itemMasterList.map((item) => (
+                      <tr key={item.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                        <td className="p-2.5 font-mono text-[11px] text-zinc-500">{item.createdOn}</td>
+                        <td className="p-2.5 font-semibold text-zinc-900 dark:text-zinc-100">{item.name}</td>
+                        <td className="p-2.5 text-zinc-600 dark:text-zinc-400 max-w-xs truncate">{item.description}</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-zinc-900 dark:text-zinc-100">
+                          ₹{item.clientRate.toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-2.5 text-right font-mono text-zinc-500">
+                          ₹{item.purchaseRate.toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] font-mono">
+                            {item.uom}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-center font-mono text-emerald-600">{item.gst}%</td>
+                        <td className="p-2.5">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                            {item.tag}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <div className="flex items-center justify-center gap-1.5 text-zinc-400">
+                            <button className="hover:text-zinc-900 dark:hover:text-zinc-100"><Pencil className="w-3 h-3" /></button>
+                            <button className="hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-zinc-500 pt-1">
+                <span>Showing 5 of 5 items</span>
+                <span className="font-mono">Page 1 of 1</span>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Materials Master (Sub-tabs: All Materials | Rate Contracts) */}
+          {activeTab === "materialsMaster" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                {/* Sub-tab switcher */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setMaterialsSubTab("all")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      materialsSubTab === "all"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    All Materials
+                  </button>
+                  <button
+                    onClick={() => setMaterialsSubTab("rateContracts")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      materialsSubTab === "rateContracts"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    Rate Contracts
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => alert("Exporting Materials Excel...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Export Excel</span>
+                  </button>
+                  <button
+                    onClick={() => alert("Add Material...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Material</span>
+                  </button>
+                </div>
+              </div>
+
+              {materialsSubTab === "all" ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">CenturyPly Club Prime 710</span>
+                        <span className="font-mono font-bold text-emerald-600">₹142 / SqFt</span>
+                      </div>
+                      <p className="text-zinc-500 text-[11px]">BWP Marine plywood with firewall & viro-kill protection</p>
+                      <span className="text-[10px] text-zinc-400 font-mono">GST: 18% • UOM: SQFT</span>
+                    </div>
+
+                    <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">Hafele Metalla 3-Way Hinge</span>
+                        <span className="font-mono font-bold text-emerald-600">₹245 / Pair</span>
+                      </div>
+                      <p className="text-zinc-500 text-[11px]">Soft-close clip-on hydraulic concealed cabinet hinges</p>
+                      <span className="text-[10px] text-zinc-400 font-mono">GST: 18% • UOM: Set</span>
+                    </div>
+
+                    <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">Waaree 550W Bifacial Panel</span>
+                        <span className="font-mono font-bold text-emerald-600">₹18,500 / Piece</span>
+                      </div>
+                      <p className="text-zinc-500 text-[11px]">144-cell TopCon high-yield solar PV modules</p>
+                      <span className="text-[10px] text-zinc-400 font-mono">GST: 12% • UOM: Nos</span>
+                    </div>
+
+                    <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">UltraTech M25 RMC Concrete</span>
+                        <span className="font-mono font-bold text-emerald-600">₹4,850 / Cu.M</span>
+                      </div>
+                      <p className="text-zinc-500 text-[11px]">Design mix ready concrete with slump certification</p>
+                      <span className="text-[10px] text-zinc-400 font-mono">GST: 18% • UOM: Cu.M</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md text-xs space-y-2">
+                  <div className="flex justify-between items-center font-medium text-zinc-900 dark:text-zinc-100">
+                    <span>Hafele India Annual Rate Agreement (FY 26-27)</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">Active Contract</span>
+                  </div>
+                  <p className="text-zinc-500 text-[11px]">Guaranteed 38% distributor discount on all architectural fittings & drawer runners across NCR projects.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5: Checklist Master (ProjectStudio reference) */}
+          {activeTab === "checklistMaster" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    Checklist Master
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Standardized design deliverables, site execution milestones, and handover inspection audits
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => alert("Create Design Checklist...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create Design Checklist</span>
+                  </button>
+                  <button
+                    onClick={() => alert("Add Handover Checklist...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Handover Checklist</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="p-3.5 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">Design Deliverables Master</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-600 border border-blue-500/20 font-medium">
+                        Design
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">8 Checkpoints • Moodboard, 2D Cad layout, 3D photorealistic concepts, MEP schematic, Structural sign-off</p>
+                  </div>
+                  <button className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium hover:bg-zinc-200">
+                    Edit Checklist
+                  </button>
+                </div>
+
+                <div className="p-3.5 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">Final Turnkey Handover Checklist</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-medium">
+                        Handover
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">10 Checkpoints • Touch-up paint inspection, soft-close calibration, plumbing pressure test, deep cleaning sign-off</p>
+                  </div>
+                  <button className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium hover:bg-zinc-200">
+                    Edit Checklist
+                  </button>
+                </div>
+
+                <div className="p-3.5 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">Solar Net-Metering & DISCOM Commissioning</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-600 border border-amber-500/20 font-medium">
+                        Solar EPC
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">6 Checkpoints • Earthing resistance test &lt; 5Ω, inverter anti-islanding test, bidirectional net meter installation</p>
+                  </div>
+                  <button className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium hover:bg-zinc-200">
+                    Edit Checklist
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: Manpower (Exact Match with ProjectStudio roles) */}
+          {activeTab === "manpower" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    Manpower & Trade Roles
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Designated site trade categories, quality inspectors, safety officers, and standard wage benchmarks
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => alert("Importing Manpower Excel...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Import Excel</span>
+                  </button>
+                  <button
+                    onClick={() => alert("Add Manpower...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Manpower</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-md">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[11px]">
+                    <tr>
+                      <th className="p-2.5">Trade / Role Name</th>
+                      <th className="p-2.5">Specialization</th>
+                      <th className="p-2.5 text-center">Active Crew</th>
+                      <th className="p-2.5 text-right">Standard Daily Wage</th>
+                      <th className="p-2.5 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200">
+                    {manpowerRoles.map((role) => (
+                      <tr key={role.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                        <td className="p-2.5 font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                          <HardHat className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>{role.name}</span>
+                        </td>
+                        <td className="p-2.5 text-zinc-500">{role.trade}</td>
+                        <td className="p-2.5 text-center font-mono">{role.count} Workers</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-zinc-900 dark:text-zinc-100">
+                          ₹{role.dailyWage.toLocaleString("en-IN")} / day
+                        </td>
+                        <td className="p-2.5 text-right">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 font-semibold">
+                            {role.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: Vendors (Exact Match with ProjectStudio vendors tabs & fields) */}
+          {activeTab === "vendors" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                {/* Vendor Sub-tabs */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setVendorSubTab("all")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      vendorSubTab === "all"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
+                    }`}
+                  >
+                    All ({vendorsList.length})
+                  </button>
+                  <button
+                    onClick={() => setVendorSubTab("active")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      vendorSubTab === "active"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
+                    }`}
+                  >
+                    Active ({vendorsList.filter((v) => v.status === "Active").length})
+                  </button>
+                  <button
+                    onClick={() => setVendorSubTab("inactive")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      vendorSubTab === "inactive"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
+                    }`}
+                  >
+                    Inactive (0)
+                  </button>
+                  <button
+                    onClick={() => setVendorSubTab("blacklist")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      vendorSubTab === "blacklist"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
+                    }`}
+                  >
+                    Blacklist (0)
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => alert("Exporting Vendor database...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Export Excel</span>
+                  </button>
+                  <button
+                    onClick={() => alert("Add Vendor onboarding...")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Vendor</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Vendors Table */}
+              <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-md">
+                <table className="w-full text-xs text-left min-w-[750px]">
+                  <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[11px]">
+                    <tr>
+                      <th className="p-2.5">Vendor Code</th>
+                      <th className="p-2.5">Display Name & Legal Name</th>
+                      <th className="p-2.5">GST & PAN</th>
+                      <th className="p-2.5">Phone & City</th>
+                      <th className="p-2.5">Vendor Type</th>
+                      <th className="p-2.5 text-right">Outstanding</th>
+                      <th className="p-2.5 text-center">Status</th>
+                      <th className="p-2.5 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200">
+                    {vendorsList.map((v) => (
+                      <tr key={v.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                        <td className="p-2.5 font-mono font-bold text-zinc-900 dark:text-zinc-100">{v.code}</td>
+                        <td className="p-2.5">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">{v.displayName}</span>
+                          <span className="text-[11px] text-zinc-500">{v.legalName}</span>
+                        </td>
+                        <td className="p-2.5 font-mono text-[11px]">
+                          <div>GST: {v.gst}</div>
+                          <div className="text-zinc-500">PAN: {v.pan}</div>
+                        </td>
+                        <td className="p-2.5 text-zinc-600 dark:text-zinc-400">
+                          <div>{v.phone}</div>
+                          <span className="text-[11px] text-zinc-500">{v.city}</span>
+                        </td>
+                        <td className="p-2.5 text-zinc-600 dark:text-zinc-400">{v.type}</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-emerald-600">{v.outstanding}</td>
+                        <td className="p-2.5 text-center">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 font-semibold">
+                            {v.status}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <button
+                            onClick={() => alert(`View details for ${v.displayName}`)}
+                            className="text-[11px] px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-medium hover:bg-zinc-200"
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 8: Users (Exact Match with ProjectStudio users tabs & fields) */}
+          {activeTab === "users" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                {/* Sub-tabs: Internal Users | Clients | Vendors */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setUserSubTab("internal")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      userSubTab === "internal"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
+                    }`}
+                  >
+                    Internal Users ({usersList.length})
+                  </button>
+                  <button
+                    onClick={() => setUserSubTab("clients")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      userSubTab === "clients"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
+                    }`}
+                  >
+                    Clients (0)
+                  </button>
+                  <button
+                    onClick={() => setUserSubTab("vendors")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                      userSubTab === "vendors"
+                        ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                        : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
+                    }`}
+                  >
+                    Vendors (0)
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => alert("Add User / Invite Team Member modal...")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add User</span>
+                </button>
+              </div>
+
+              {/* Users Table */}
+              <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-md">
+                <table className="w-full text-xs text-left min-w-[700px]">
+                  <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[11px]">
+                    <tr>
+                      <th className="p-2.5">Name & Email</th>
+                      <th className="p-2.5">Phone Number</th>
+                      <th className="p-2.5">Joining Date</th>
+                      <th className="p-2.5">Role</th>
+                      <th className="p-2.5">Groups & Permissions</th>
+                      <th className="p-2.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200">
+                    {usersList.map((u) => (
+                      <tr key={u.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                        <td className="p-2.5">
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100">{u.name}</div>
+                          <span className="text-[11px] text-zinc-500">{u.email}</span>
+                        </td>
+                        <td className="p-2.5 font-mono text-zinc-600 dark:text-zinc-400">{u.phone}</td>
+                        <td className="p-2.5 font-mono text-zinc-500 text-[11px]">{u.joiningDate}</td>
+                        <td className="p-2.5">
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{u.role}</span>
+                        </td>
+                        <td className="p-2.5">
+                          <div className="flex flex-wrap gap-1">
+                            {u.permissions.map((p, idx) => (
+                              <span
+                                key={idx}
+                                className="px-1.5 py-0.5 rounded text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                              >
+                                {p}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="p-2.5 text-right">
+                          <button className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 p-1">
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 9: Listing Page */}
           {activeTab === "listingPage" && (
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-5">
               <div>
@@ -569,7 +1454,7 @@ function SettingsContent() {
             </div>
           )}
 
-          {/* TAB 4: AI Pro Credit */}
+          {/* TAB 10: AI Pro Credit */}
           {activeTab === "aiProCredit" && (
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-5">
               <div className="flex items-center justify-between">
@@ -581,7 +1466,10 @@ function SettingsContent() {
                     Used for automated CAD BOQ parsing, solar shadow raytracing, and concept rendering
                   </p>
                 </div>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-md text-xs font-semibold hover:opacity-90">
+                <button
+                  onClick={() => alert("Purchasing additional compute credits...")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold hover:opacity-90"
+                >
                   <Plus className="w-3.5 h-3.5" /> Buy Credits
                 </button>
               </div>
@@ -596,146 +1484,7 @@ function SettingsContent() {
             </div>
           )}
 
-          {/* TAB 5: Item Master */}
-          {activeTab === "itemMaster" && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    Item Master Catalog
-                  </h3>
-                  <p className="text-xs text-zinc-500">
-                    Standard rates, units, and GST slabs for multi-sector proposals
-                  </p>
-                </div>
-                <button className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-md text-xs font-semibold">
-                  <Plus className="w-3.5 h-3.5" /> Add Standard Item
-                </button>
-              </div>
-
-              <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-md">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500">
-                    <tr>
-                      <th className="p-2.5 font-medium">Code</th>
-                      <th className="p-2.5 font-medium">Item Name</th>
-                      <th className="p-2.5 font-medium">Sector</th>
-                      <th className="p-2.5 font-medium">Unit</th>
-                      <th className="p-2.5 font-medium">Base Rate</th>
-                      <th className="p-2.5 font-medium">GST</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono">
-                    <tr>
-                      <td className="p-2.5 font-semibold">ITM-SL-01</td>
-                      <td className="p-2.5 font-sans font-medium">550W Mono PERC Solar Panel</td>
-                      <td className="p-2.5 font-sans text-zinc-500">Solar EPC</td>
-                      <td className="p-2.5">Wp / Nos</td>
-                      <td className="p-2.5">₹18,500</td>
-                      <td className="p-2.5 text-emerald-600">12%</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5 font-semibold">ITM-WD-04</td>
-                      <td className="p-2.5 font-sans font-medium">18mm Marine BWP Plywood Carcass</td>
-                      <td className="p-2.5 font-sans text-zinc-500">Modular Millwork</td>
-                      <td className="p-2.5">SqFt</td>
-                      <td className="p-2.5">₹1,450</td>
-                      <td className="p-2.5 text-emerald-600">18%</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5 font-semibold">ITM-CV-08</td>
-                      <td className="p-2.5 font-sans font-medium">Gypsum False Ceiling with LED Troughs</td>
-                      <td className="p-2.5 font-sans text-zinc-500">Turnkey Interior</td>
-                      <td className="p-2.5">SqFt</td>
-                      <td className="p-2.5">₹135</td>
-                      <td className="p-2.5 text-emerald-600">18%</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: Materials Master */}
-          {activeTab === "materialsMaster" && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  Approved Materials & Specification Brands
-                </h3>
-                <p className="text-xs text-zinc-500">
-                  Pre-approved supplier brands and quality specs across Indian markets
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded p-3 space-y-1">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">Solar Inverters & Panels</span>
-                  <p className="text-zinc-500 text-[11px]">Approved: Waaree, Adani Solar, Sungrow, Growatt</p>
-                </div>
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded p-3 space-y-1">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">Modular Millwork & Hardware</span>
-                  <p className="text-zinc-500 text-[11px]">Approved: Hafele, Hettich, CenturyPly, Greenply</p>
-                </div>
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded p-3 space-y-1">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">Civil & Structural Concrete</span>
-                  <p className="text-zinc-500 text-[11px]">Approved: UltraTech RMC, Tata Tiscon TMT 550D</p>
-                </div>
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded p-3 space-y-1">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">Electrical & Switchgear</span>
-                  <p className="text-zinc-500 text-[11px]">Approved: Schneider Electric, Havells, Polycab FRLS</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 7: Checklist Master */}
-          {activeTab === "checklistMaster" && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  Master Quality & Site Audit Checklists
-                </h3>
-                <p className="text-xs text-zinc-500">
-                  Automated handover and milestone audit templates across project types
-                </p>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-100">Solar Net-Metering & Grid Sync Checklist</div>
-                    <span className="text-[11px] text-zinc-500">5 steps • DISCOM inspector sign-off, earthing pit resistance &lt; 5Ω</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono text-[10px]">
-                    Active
-                  </span>
-                </div>
-
-                <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-100">Modular Factory QA & CNC Sizing Checklist</div>
-                    <span className="text-[11px] text-zinc-500">6 steps • 2mm PVC edge banding adhesion, soft-close alignment</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono text-[10px]">
-                    Active
-                  </span>
-                </div>
-
-                <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-100">Civil RCC Slab Pouring & Cube Test Audit</div>
-                    <span className="text-[11px] text-zinc-500">7 steps • Slump test 120mm, rebar cover blocks, 7/14/28-day curing</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono text-[10px]">
-                    Active
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 8: Moodboard */}
+          {/* TAB 11: Moodboard */}
           {activeTab === "moodboard" && (
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
               <div>
@@ -767,7 +1516,7 @@ function SettingsContent() {
             </div>
           )}
 
-          {/* TAB 9: Activity */}
+          {/* TAB 12: Activity */}
           {activeTab === "activity" && (
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
               <div>
@@ -791,123 +1540,6 @@ function SettingsContent() {
                 <div className="p-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded flex items-center justify-between">
                   <span className="text-zinc-800 dark:text-zinc-200">Payment Request PR-204 approved by Studio Admin</span>
                   <span className="text-[10px] text-zinc-400">3 hours ago</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 10: Manpower */}
-          {activeTab === "manpower" && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    Labor Contractors & Daily Wages
-                  </h3>
-                  <p className="text-xs text-zinc-500">
-                    Contractor masters, daily headcounts, and specialized trade rates
-                  </p>
-                </div>
-                <button className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-md text-xs font-semibold">
-                  <Plus className="w-3.5 h-3.5" /> Add Contractor
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded p-3 space-y-1">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">Master Carpentry Guild</span>
-                  <p className="text-zinc-500 text-[11px]">Head Contractor: Suresh Sharma • Daily Wage: ₹1,100 / skilled tech</p>
-                </div>
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded p-3 space-y-1">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">Solar Electrical & MMS Gang</span>
-                  <p className="text-zinc-500 text-[11px]">Head Contractor: Dinesh Yadav • Daily Wage: ₹950 / technician</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 11: Vendors */}
-          {activeTab === "vendors" && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    Registered Suppliers & Vendor Directory
-                  </h3>
-                  <p className="text-xs text-zinc-500">
-                    Active credit accounts, GST numbers, and payment terms
-                  </p>
-                </div>
-                <button className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-md text-xs font-semibold">
-                  <Plus className="w-3.5 h-3.5" /> Add Vendor
-                </button>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded flex items-center justify-between">
-                  <div>
-                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">Waaree Energies Distribution Hub</span>
-                    <p className="text-zinc-500 text-[11px]">GST: 24AAACW2948K1Z3 • Credit Terms: 30 Days Net</p>
-                  </div>
-                  <span className="text-emerald-600 font-semibold font-mono">₹4.2L Outstanding</span>
-                </div>
-                <div className="p-3 border border-zinc-200 dark:border-zinc-800 rounded flex items-center justify-between">
-                  <div>
-                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">Hafele Architectural Hardware Depot</span>
-                    <p className="text-zinc-500 text-[11px]">GST: 27AABCH1092Q1ZV • Credit Terms: 15 Days Net</p>
-                  </div>
-                  <span className="text-zinc-500 font-mono">₹0 Outstanding</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 12: Users */}
-          {activeTab === "users" && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    Studio Team & Seat Allocation
-                  </h3>
-                  <p className="text-xs text-zinc-500">
-                    Manage active members and role access across workspaces
-                  </p>
-                </div>
-                <button className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-md text-xs font-semibold">
-                  <Plus className="w-3.5 h-3.5" /> Invite Member
-                </button>
-              </div>
-
-              <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-md text-xs">
-                <div className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
-                      AK
-                    </div>
-                    <div>
-                      <div className="font-semibold text-zinc-900 dark:text-zinc-100">Ar. Aman Katyar</div>
-                      <span className="text-zinc-500 text-[11px]">aman@basekraft.in</span>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-semibold">
-                    Studio Principal (Admin)
-                  </span>
-                </div>
-
-                <div className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center font-bold text-xs">
-                      RM
-                    </div>
-                    <div>
-                      <div className="font-semibold text-zinc-900 dark:text-zinc-100">Rohan Malhotra</div>
-                      <span className="text-zinc-500 text-[11px]">rohan@basekraft.in</span>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-[10px] font-medium">
-                    Project Director
-                  </span>
                 </div>
               </div>
             </div>
@@ -961,6 +1593,864 @@ function SettingsContent() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* TAB 14: Configuration */}
+          {activeTab === "configuration" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    Studio Configuration & Defaults
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Project numbering series, billing margins, working hours, and milestone brackets
+                  </p>
+                </div>
+                <button
+                  onClick={() => alert("Configuration settings saved successfully!")}
+                  className="px-3.5 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold hover:opacity-90 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" /> Save Configuration
+                </button>
+              </div>
+
+              {/* Grid 1: Project Numbering & Financials */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-medium text-zinc-700 dark:text-zinc-300">Project Code Prefix</label>
+                  <input
+                    type="text"
+                    defaultValue="P-"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100"
+                  />
+                  <span className="text-[10px] text-zinc-400">Generates P-101, P-438, P-619</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-medium text-zinc-700 dark:text-zinc-300">Default BOQ Markup Margin (%)</label>
+                  <input
+                    type="number"
+                    defaultValue="20"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100"
+                  />
+                  <span className="text-[10px] text-zinc-400">Applied automatically to item costs</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-medium text-zinc-700 dark:text-zinc-300">Service GST Bracket (%)</label>
+                  <input
+                    type="number"
+                    defaultValue="18"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100"
+                  />
+                  <span className="text-[10px] text-zinc-400">Architectural & Fit-out standard</span>
+                </div>
+              </div>
+
+              {/* Grid 2: Working Shifts & Operations */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-3 text-xs">
+                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">Working Calendar & Studio Shifts</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-500">Working Days</label>
+                    <input
+                      type="text"
+                      defaultValue="Monday – Saturday"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-500">Standard Studio Hours</label>
+                    <input
+                      type="text"
+                      defaultValue="09:30 AM – 06:30 PM"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-500">Overtime Rate Multiplier</label>
+                    <input
+                      type="text"
+                      defaultValue="1.5× Normal Wage"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid 3: Turnkey Payment Schedule Defaults */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-3 text-xs">
+                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">Turnkey Milestone Billing Defaults</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono">
+                  <div className="p-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded">
+                    <span className="text-[10px] text-zinc-400 font-sans block">Phase 1: Advance Sign-off</span>
+                    <strong className="text-sm text-zinc-900 dark:text-zinc-100">20%</strong>
+                  </div>
+                  <div className="p-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded">
+                    <span className="text-[10px] text-zinc-400 font-sans block">Phase 2: Civil / Structure</span>
+                    <strong className="text-sm text-zinc-900 dark:text-zinc-100">35%</strong>
+                  </div>
+                  <div className="p-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded">
+                    <span className="text-[10px] text-zinc-400 font-sans block">Phase 3: Millwork / Finishes</span>
+                    <strong className="text-sm text-zinc-900 dark:text-zinc-100">30%</strong>
+                  </div>
+                  <div className="p-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded">
+                    <span className="text-[10px] text-zinc-400 font-sans block">Phase 4: Snag Handover</span>
+                    <strong className="text-sm text-zinc-900 dark:text-zinc-100">15%</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 15: Automation */}
+          {activeTab === "automation" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    Automated Workflows & Notifications
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Real-time triggers for client milestones, WhatsApp alerts, PO approvals, and inventory alerts
+                  </p>
+                </div>
+                <button
+                  onClick={() => alert("Add Custom Automation Rule modal...")}
+                  className="px-3.5 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold hover:opacity-90 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Rule
+                </button>
+              </div>
+
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">
+                {/* Rule 1 */}
+                <div className="py-3.5 flex items-center justify-between">
+                  <div className="space-y-0.5 max-w-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">Client Milestone WhatsApp Notification</span>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">Active</span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Trigger: When site supervisor signs off a milestone checklist — Auto-send client WhatsApp message with photos and progress PDF.
+                    </p>
+                  </div>
+                  <div className="w-9 h-5 bg-zinc-950 dark:bg-zinc-100 rounded-full flex items-center justify-end px-0.5 cursor-pointer">
+                    <div className="w-4 h-4 bg-white dark:bg-zinc-900 rounded-full" />
+                  </div>
+                </div>
+
+                {/* Rule 2 */}
+                <div className="py-3.5 flex items-center justify-between">
+                  <div className="space-y-0.5 max-w-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">Daily Site Headcount & Labor WhatsApp Prompt</span>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">Active</span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Trigger: Every morning at 09:00 AM — Sends interactive attendance checklist to on-site supervisors.
+                    </p>
+                  </div>
+                  <div className="w-9 h-5 bg-zinc-950 dark:bg-zinc-100 rounded-full flex items-center justify-end px-0.5 cursor-pointer">
+                    <div className="w-4 h-4 bg-white dark:bg-zinc-900 rounded-full" />
+                  </div>
+                </div>
+
+                {/* Rule 3 */}
+                <div className="py-3.5 flex items-center justify-between">
+                  <div className="space-y-0.5 max-w-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">Auto-Approve POs Below ₹50,000</span>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">Active</span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Trigger: When procurement order amount is less than or equal to ₹50,000 from pre-approved catalog vendor — Instantly mark status as Approved.
+                    </p>
+                  </div>
+                  <div className="w-9 h-5 bg-zinc-950 dark:bg-zinc-100 rounded-full flex items-center justify-end px-0.5 cursor-pointer">
+                    <div className="w-4 h-4 bg-white dark:bg-zinc-900 rounded-full" />
+                  </div>
+                </div>
+
+                {/* Rule 4 */}
+                <div className="py-3.5 flex items-center justify-between">
+                  <div className="space-y-0.5 max-w-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">Payment Due Escalation Reminder</span>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-mono text-[10px]">Active</span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Trigger: 3 days prior to invoice due date — Auto-sends courteous reminder with UPI / Bank payment link to client.
+                    </p>
+                  </div>
+                  <div className="w-9 h-5 bg-zinc-950 dark:bg-zinc-100 rounded-full flex items-center justify-end px-0.5 cursor-pointer">
+                    <div className="w-4 h-4 bg-white dark:bg-zinc-900 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 16: HR & Policies */}
+          {activeTab === "hrPolicies" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-5">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  Studio HR Policies & Site Governance
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Annual leaves, site travel reimbursement allowances, and construction safety compliance
+                </p>
+              </div>
+
+              {/* Policy Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-zinc-400" />
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">Annual Leave Quota</span>
+                  </div>
+                  <p className="text-zinc-500 text-[11px]">
+                    18 Paid Leaves + 8 Casual/Sick Leaves per calendar year. Maximum 10 leaves encashable upon fiscal close.
+                  </p>
+                </div>
+
+                <div className="p-3.5 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-zinc-400" />
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">Site Travel Allowance</span>
+                  </div>
+                  <p className="text-zinc-500 text-[11px]">
+                    ₹14 / km for four-wheelers, ₹7 / km for two-wheelers. Outstation site visits include ₹2,500 / day per-diem allowance.
+                  </p>
+                </div>
+
+                <div className="p-3.5 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <HardHat className="w-4 h-4 text-zinc-400" />
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">PPE & Site Safety</span>
+                  </div>
+                  <p className="text-zinc-500 text-[11px]">
+                    Mandatory ISI-marked hard hat, steel-toe shoes, and safety vest for all visiting architects and contractor staff.
+                  </p>
+                </div>
+              </div>
+
+              {/* Holidays Calendar 2026 */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                      Studio Holidays Calendar (2026)
+                    </h4>
+                    <span className="text-[11px] text-zinc-500 font-mono">{holidaysList.length} Gazetted Holidays</span>
+                  </div>
+                  <button
+                    onClick={() => setIsAddHolidayModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-md text-xs font-semibold hover:opacity-90 shadow-xs cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Holiday</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-md">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[11px]">
+                      <tr>
+                        <th className="p-2.5">Date</th>
+                        <th className="p-2.5">Holiday Occasion</th>
+                        <th className="p-2.5">Day</th>
+                        <th className="p-2.5 text-right">Site Status</th>
+                        <th className="p-2.5 text-center w-12">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono">
+                      {holidaysList.map((h) => (
+                        <tr key={h.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                          <td className="p-2.5 font-bold">{h.date}</td>
+                          <td className="p-2.5 font-sans font-medium text-zinc-900 dark:text-zinc-100">{h.name}</td>
+                          <td className="p-2.5 font-sans text-zinc-500">{h.day}</td>
+                          <td className="p-2.5 text-right">
+                            <span className={`font-sans font-medium ${
+                              h.siteStatus === "All Sites Closed" ? "text-red-500" : "text-amber-600"
+                            }`}>
+                              {h.siteStatus}
+                            </span>
+                          </td>
+                          <td className="p-2.5 text-center">
+                            <button
+                              onClick={() => setHolidaysList(holidaysList.filter((item) => item.id !== h.id))}
+                              title="Delete Holiday"
+                              className="text-zinc-400 hover:text-red-500 transition p-1 cursor-pointer"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Add Holiday Modal */}
+              {isAddHolidayModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-md w-full shadow-2xl overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-zinc-500" />
+                        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                          Add New Studio Holiday
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setIsAddHolidayModalOpen(false)}
+                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!newHolidayName) return;
+
+                        const dateObj = new Date(newHolidayDate);
+                        const formattedDate = dateObj.toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        });
+                        const dayName = dateObj.toLocaleDateString("en-GB", { weekday: "long" });
+
+                        const newEntry = {
+                          id: `h-${Date.now()}`,
+                          date: formattedDate,
+                          name: newHolidayName,
+                          day: dayName,
+                          siteStatus: newHolidayStatus,
+                        };
+
+                        setHolidaysList([...holidaysList, newEntry]);
+                        setNewHolidayName("");
+                        setIsAddHolidayModalOpen(false);
+                      }}
+                      className="p-5 space-y-4 text-xs"
+                    >
+                      <div className="space-y-1.5">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">
+                          Holiday Occasion / Festival Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Gandhi Jayanti, Eid-ul-Fitr, Christmas"
+                          value={newHolidayName}
+                          onChange={(e) => setNewHolidayName(e.target.value)}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">
+                          Holiday Date *
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={newHolidayDate}
+                          onChange={(e) => setNewHolidayDate(e.target.value)}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">
+                          Site & Office Status *
+                        </label>
+                        <select
+                          value={newHolidayStatus}
+                          onChange={(e) => setNewHolidayStatus(e.target.value)}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+                        >
+                          <option value="All Sites Closed">All Sites Closed (Gazetted Holiday)</option>
+                          <option value="Optional Half Day">Optional Half Day (Restricted Holiday)</option>
+                          <option value="Work Allowed with Double Wage">Work Allowed with Double Wage</option>
+                        </select>
+                      </div>
+
+                      <div className="pt-2 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsAddHolidayModalOpen(false)}
+                          className="px-3.5 py-2 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-2 rounded bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-semibold hover:opacity-90 shadow-xs flex items-center gap-1.5"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Add to Calendar</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 17: Integrations */}
+          {activeTab === "integrations" && (
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-5">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  Connected Integrations & Cloud Services
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Connect third-party accounting, payment gateways, WhatsApp notifications, and CAD sync
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                {/* Integration 1: WhatsApp */}
+                <div className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3 bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                          WA
+                        </div>
+                        <div>
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100">WhatsApp Business Cloud API</div>
+                          <span className="text-[11px] text-zinc-500">
+                            {whatsappConfig.isConnected ? `Sender: ${whatsappConfig.senderPhone}` : "Not Configured"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        whatsappConfig.isConnected
+                          ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                          : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                      }`}>
+                        {whatsappConfig.isConnected ? "Connected" : "Disconnected"}
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Sends automated milestone photos, invoice reminders, and PDF proposal links directly to client WhatsApp numbers.
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-end">
+                    <button
+                      onClick={() => {
+                        setWaTestFeedback(null);
+                        setIsWhatsAppModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 rounded bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs font-semibold hover:opacity-90 shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>{whatsappConfig.isConnected ? "Configure WhatsApp" : "Connect WhatsApp"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Integration 2: Tally / Zoho */}
+                <div className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3 bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+                          TL
+                        </div>
+                        <div>
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100">Tally Prime / Zoho Books</div>
+                          <span className="text-[11px] text-zinc-500">ERP Accounting Bridge</span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">
+                        Sync Active
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Two-way synchronization for purchase orders, vendor invoices, GST e-way bills, and bank ledger reconciliations.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex items-center justify-end">
+                    <button
+                      onClick={() => alert("Tally Prime XML port 9000 connector is running.")}
+                      className="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-medium"
+                    >
+                      Manage Sync
+                    </button>
+                  </div>
+                </div>
+
+                {/* Integration 3: Razorpay */}
+                <div className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3 bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold">
+                          RZ
+                        </div>
+                        <div>
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100">Razorpay Payment Gateway</div>
+                          <span className="text-[11px] text-zinc-500 font-mono">
+                            {razorpayConfig.isConnected ? `MID: ${razorpayConfig.keyId} (${razorpayConfig.mode.toUpperCase()})` : "Not Configured"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        razorpayConfig.isConnected
+                          ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                          : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                      }`}>
+                        {razorpayConfig.isConnected ? "Connected" : "Disconnected"}
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Enables instant UPI QR codes and netbanking escrow payment links inside client quotation portals.
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-end">
+                    <button
+                      onClick={() => {
+                        setRzpTestFeedback(null);
+                        setIsRazorpayModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 rounded bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs font-semibold hover:opacity-90 shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>{razorpayConfig.isConnected ? "Configure Razorpay" : "Connect Razorpay"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Integration 4: CAD */}
+                <div className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3 bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center font-bold">
+                          CAD
+                        </div>
+                        <div>
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100">AutoCAD & Revit BIM Link</div>
+                          <span className="text-[11px] text-zinc-500">Direct Drawing Extractor</span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">
+                        Installed
+                      </span>
+                    </div>
+                    <p className="text-zinc-500 text-[11px]">
+                      Extracts room carpet areas, wall perimeter running feet, and false ceiling cutouts straight into BOQ line items.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex items-center justify-end">
+                    <button
+                      onClick={() => alert("AutoCAD / Revit plugin sync active for DWG & RVT models.")}
+                      className="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-medium"
+                    >
+                      Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* MODAL 1: WhatsApp Connection Flow */}
+              {isWhatsAppModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
+                    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                          WA
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            Connect WhatsApp Business Cloud API
+                          </h3>
+                          <p className="text-[11px] text-zinc-500">Meta for Developers Graph API credentials</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setIsWhatsAppModalOpen(false)}
+                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setWhatsappConfig({ ...whatsappConfig, isConnected: true });
+                        setIsWhatsAppModalOpen(false);
+                      }}
+                      className="p-5 space-y-3.5 text-xs"
+                    >
+                      <div className="space-y-1">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">
+                          Registered WhatsApp Sender Phone *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={whatsappConfig.senderPhone}
+                          onChange={(e) => setWhatsappConfig({ ...whatsappConfig, senderPhone: e.target.value })}
+                          placeholder="+91 98101 22345"
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="font-medium text-zinc-700 dark:text-zinc-300">Phone Number ID *</label>
+                          <input
+                            type="text"
+                            required
+                            value={whatsappConfig.phoneNumberId}
+                            onChange={(e) => setWhatsappConfig({ ...whatsappConfig, phoneNumberId: e.target.value })}
+                            className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-medium text-zinc-700 dark:text-zinc-300">WABA Account ID *</label>
+                          <input
+                            type="text"
+                            required
+                            value={whatsappConfig.wabaId}
+                            onChange={(e) => setWhatsappConfig({ ...whatsappConfig, wabaId: e.target.value })}
+                            className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">
+                          Meta Permanent Access Token *
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={whatsappConfig.accessToken}
+                          onChange={(e) => setWhatsappConfig({ ...whatsappConfig, accessToken: e.target.value })}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Webhook Endpoint Box */}
+                      <div className="p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded space-y-1 font-mono text-[11px]">
+                        <span className="text-zinc-500 font-sans block text-[10px]">Webhook Callback URL:</span>
+                        <div className="text-zinc-800 dark:text-zinc-200 select-all">
+                          https://api.basekraft.in/v1/webhooks/whatsapp
+                        </div>
+                      </div>
+
+                      {/* Test Connection Button */}
+                      <div className="flex items-center justify-between pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setWaTestFeedback(`Verified! WhatsApp Ping sent successfully to ${whatsappConfig.senderPhone}`)}
+                          className="px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[11px] font-medium cursor-pointer"
+                        >
+                          Send Test Ping
+                        </button>
+                        {waTestFeedback && (
+                          <span className="text-emerald-600 font-medium text-[11px] flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> {waTestFeedback}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Action Footer */}
+                      <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                        {whatsappConfig.isConnected ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWhatsappConfig({ ...whatsappConfig, isConnected: false });
+                              setIsWhatsAppModalOpen(false);
+                            }}
+                            className="text-red-500 hover:underline text-xs"
+                          >
+                            Disconnect WhatsApp
+                          </button>
+                        ) : <div />}
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsWhatsAppModalOpen(false)}
+                            className="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-4 py-1.5 rounded bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-semibold hover:opacity-90 shadow-xs"
+                          >
+                            Save & Connect
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* MODAL 2: Razorpay Connection Flow */}
+              {isRazorpayModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
+                    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-xs">
+                          RZ
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            Connect Razorpay Payment Gateway
+                          </h3>
+                          <p className="text-[11px] text-zinc-500">API keys for automated client escrow & UPI collection</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setIsRazorpayModalOpen(false)}
+                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setRazorpayConfig({ ...razorpayConfig, isConnected: true });
+                        setIsRazorpayModalOpen(false);
+                      }}
+                      className="p-5 space-y-3.5 text-xs"
+                    >
+                      {/* Environment Mode Switch */}
+                      <div className="space-y-1">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">Environment Mode *</label>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setRazorpayConfig({ ...razorpayConfig, mode: "live", keyId: "rzp_live_Basekraft99" })}
+                            className={`px-3 py-1.5 rounded text-xs font-semibold cursor-pointer ${
+                              razorpayConfig.mode === "live"
+                                ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                                : "border border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                            }`}
+                          >
+                            Live Mode (Production)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRazorpayConfig({ ...razorpayConfig, mode: "test", keyId: "rzp_test_BasekraftSandbox" })}
+                            className={`px-3 py-1.5 rounded text-xs font-semibold cursor-pointer ${
+                              razorpayConfig.mode === "test"
+                                ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                                : "border border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                            }`}
+                          >
+                            Test / Sandbox Mode
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">Key ID *</label>
+                        <input
+                          type="text"
+                          required
+                          value={razorpayConfig.keyId}
+                          onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keyId: e.target.value })}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">Key Secret *</label>
+                        <input
+                          type="password"
+                          required
+                          value={razorpayConfig.keySecret}
+                          onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keySecret: e.target.value })}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="font-medium text-zinc-700 dark:text-zinc-300">Merchant Business Name</label>
+                        <input
+                          type="text"
+                          value={razorpayConfig.merchantName}
+                          onChange={(e) => setRazorpayConfig({ ...razorpayConfig, merchantName: e.target.value })}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Test Connection Button */}
+                      <div className="flex items-center justify-between pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setRzpTestFeedback(`Authentication Successful! Connected to ${razorpayConfig.keyId}`)}
+                          className="px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[11px] font-medium cursor-pointer"
+                        >
+                          Validate Key Pair
+                        </button>
+                        {rzpTestFeedback && (
+                          <span className="text-emerald-600 font-medium text-[11px] flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> {rzpTestFeedback}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Action Footer */}
+                      <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                        {razorpayConfig.isConnected ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRazorpayConfig({ ...razorpayConfig, isConnected: false });
+                              setIsRazorpayModalOpen(false);
+                            }}
+                            className="text-red-500 hover:underline text-xs cursor-pointer"
+                          >
+                            Disconnect Gateway
+                          </button>
+                        ) : <div />}
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsRazorpayModalOpen(false)}
+                            className="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-4 py-1.5 rounded bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-semibold hover:opacity-90 shadow-xs cursor-pointer"
+                          >
+                            Save & Connect
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
