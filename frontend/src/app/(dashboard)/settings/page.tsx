@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, Suspense, useMemo } from "react";
+import React, { useState, Suspense, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   getLetterheadConfig,
   saveLetterheadConfig,
+  defaultLetterheadConfig,
   CompanyLetterheadConfig,
 } from "@/data/letterheadConfig";
 import {
@@ -142,10 +143,53 @@ function SettingsContent() {
     udyamNumber: "UDYAM-HR-05-0039210",
   });
 
-  // Company Letterhead & Proposal State
-  const [letterheadConfig, setLetterheadConfig] = useState<CompanyLetterheadConfig>(getLetterheadConfig());
+  // Company Letterhead & Proposal State (initialized with defaultLetterheadConfig to prevent SSR hydration mismatch)
+  const [letterheadConfig, setLetterheadConfig] = useState<CompanyLetterheadConfig>(defaultLetterheadConfig);
   const [isEditingLetterhead, setIsEditingLetterhead] = useState(false);
   const [letterheadSavedToast, setLetterheadSavedToast] = useState(false);
+
+  // Sync client-persisted letterhead config from localStorage after hydration
+  useEffect(() => {
+    setLetterheadConfig(getLetterheadConfig());
+  }, []);
+
+  // Instant Letterhead mode change with automatic localStorage save
+  const handleLetterheadModeChange = (mode: "digital" | "uploadedPdf" | "prePrinted") => {
+    const updated: CompanyLetterheadConfig = { ...letterheadConfig, letterheadMode: mode };
+    setLetterheadConfig(updated);
+    saveLetterheadConfig(updated);
+    setLetterheadSavedToast(true);
+    setTimeout(() => setLetterheadSavedToast(false), 3000);
+  };
+
+  // Instant Letterhead file upload with base64 data persistence
+  const handleLetterheadFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64Url = reader.result as string;
+        const updated: CompanyLetterheadConfig = {
+          ...letterheadConfig,
+          uploadedPdfName: file.name,
+          uploadedPdfUrl: base64Url,
+          letterheadMode: "uploadedPdf",
+        };
+        setLetterheadConfig(updated);
+        saveLetterheadConfig(updated);
+        setLetterheadSavedToast(true);
+        setTimeout(() => setLetterheadSavedToast(false), 3000);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Instant margin clearance adjustments
+  const handleLetterheadMarginChange = (key: "topMarginMm" | "bottomMarginMm", val: number) => {
+    const updated: CompanyLetterheadConfig = { ...letterheadConfig, [key]: val };
+    setLetterheadConfig(updated);
+    saveLetterheadConfig(updated);
+  };
 
   // HR Holidays Calendar State
   const [holidaysList, setHolidaysList] = useState([
@@ -815,7 +859,7 @@ function SettingsContent() {
 
                 {/* Letterhead Mode Switcher & PDF Upload Option */}
                 <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                         Proposal Letterhead Mode
@@ -825,16 +869,15 @@ function SettingsContent() {
                       </p>
                     </div>
 
-                    {/* 3 Modes */}
-                    <div className="flex items-center gap-1.5">
+                    {/* 3 Modes - Fully interactive 1-click switcher */}
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
-                        disabled={!isEditingLetterhead}
-                        onClick={() => setLetterheadConfig({ ...letterheadConfig, letterheadMode: "digital" })}
+                        onClick={() => handleLetterheadModeChange("digital")}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer ${
                           letterheadConfig.letterheadMode === "digital"
                             ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-xs"
-                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         }`}
                       >
                         Digital Letterhead
@@ -842,12 +885,11 @@ function SettingsContent() {
 
                       <button
                         type="button"
-                        disabled={!isEditingLetterhead}
-                        onClick={() => setLetterheadConfig({ ...letterheadConfig, letterheadMode: "uploadedPdf" })}
+                        onClick={() => handleLetterheadModeChange("uploadedPdf")}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1 ${
                           letterheadConfig.letterheadMode === "uploadedPdf"
                             ? "bg-blue-600 text-white font-semibold shadow-xs"
-                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         }`}
                       >
                         <FileText className="w-3.5 h-3.5" />
@@ -856,12 +898,11 @@ function SettingsContent() {
 
                       <button
                         type="button"
-                        disabled={!isEditingLetterhead}
-                        onClick={() => setLetterheadConfig({ ...letterheadConfig, letterheadMode: "prePrinted" })}
+                        onClick={() => handleLetterheadModeChange("prePrinted")}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer ${
                           letterheadConfig.letterheadMode === "prePrinted"
                             ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-xs"
-                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         }`}
                       >
                         Pre-Printed Paper
@@ -890,26 +931,40 @@ function SettingsContent() {
                           </div>
                         </div>
 
-                        {isEditingLetterhead && (
-                          <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded cursor-pointer transition shadow-xs shrink-0 text-center">
-                            <span>Choose PDF / Image</span>
+                        {/* Always accessible upload & replace buttons */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded cursor-pointer transition shadow-xs text-center flex items-center gap-1.5">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{letterheadConfig.uploadedPdfName ? "Replace PDF / Image" : "Choose PDF / Image"}</span>
                             <input
                               type="file"
                               accept=".pdf,.png,.jpg,.jpeg"
                               className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  setLetterheadConfig({
-                                    ...letterheadConfig,
-                                    uploadedPdfName: file.name,
-                                    letterheadMode: "uploadedPdf",
-                                  });
-                                }
-                              }}
+                              onChange={handleLetterheadFileUpload}
                             />
                           </label>
-                        )}
+                          {letterheadConfig.uploadedPdfName && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated: CompanyLetterheadConfig = {
+                                  ...letterheadConfig,
+                                  uploadedPdfName: undefined,
+                                  uploadedPdfUrl: undefined,
+                                  letterheadMode: "digital",
+                                };
+                                setLetterheadConfig(updated);
+                                saveLetterheadConfig(updated);
+                                setLetterheadSavedToast(true);
+                                setTimeout(() => setLetterheadSavedToast(false), 2500);
+                              }}
+                              className="p-1.5 text-xs text-zinc-500 hover:text-red-600 border border-zinc-200 dark:border-zinc-700 rounded hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
+                              title="Remove custom template and revert to Digital"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Margin adjustments for custom template */}
@@ -920,10 +975,9 @@ function SettingsContent() {
                           </label>
                           <input
                             type="number"
-                            disabled={!isEditingLetterhead}
                             value={letterheadConfig.topMarginMm || 42}
-                            onChange={(e) => setLetterheadConfig({ ...letterheadConfig, topMarginMm: Number(e.target.value) })}
-                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs"
+                            onChange={(e) => handleLetterheadMarginChange("topMarginMm", Number(e.target.value))}
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
                         <div className="space-y-1">
@@ -932,10 +986,9 @@ function SettingsContent() {
                           </label>
                           <input
                             type="number"
-                            disabled={!isEditingLetterhead}
                             value={letterheadConfig.bottomMarginMm || 28}
-                            onChange={(e) => setLetterheadConfig({ ...letterheadConfig, bottomMarginMm: Number(e.target.value) })}
-                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs"
+                            onChange={(e) => handleLetterheadMarginChange("bottomMarginMm", Number(e.target.value))}
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
                       </div>
@@ -944,14 +997,25 @@ function SettingsContent() {
 
                   {/* PRE-PRINTED PHYSICAL PAPER NOTICE */}
                   {letterheadConfig.letterheadMode === "prePrinted" && (
-                    <div className="p-3.5 rounded-md bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-xs space-y-1">
+                    <div className="p-3.5 rounded-md bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-xs space-y-2">
                       <div className="font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
                         <Info className="w-3.5 h-3.5" />
                         <span>Pre-Printed Stationery Offset Mode Active</span>
                       </div>
                       <p className="text-[11px] text-amber-700 dark:text-amber-400">
-                        When printing quotes, the digital studio header and footer will be hidden. The proposal body will print with a {letterheadConfig.topMarginMm || 42}mm top margin, designed specifically to feed into office printers loaded with physical letterhead stationery.
+                        When printing or saving quotes, digital headers/footers will be suppressed. The proposal table will start with a {letterheadConfig.topMarginMm || 42}mm top clearance to align onto your pre-printed stationery.
                       </p>
+                      <div className="flex items-center gap-3 pt-1">
+                        <label className="text-[11px] font-medium text-amber-900 dark:text-amber-200">
+                          Pre-Printed Top Clearance Margin (mm):
+                        </label>
+                        <input
+                          type="number"
+                          value={letterheadConfig.topMarginMm || 42}
+                          onChange={(e) => handleLetterheadMarginChange("topMarginMm", Number(e.target.value))}
+                          className="w-24 bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-800 rounded px-2.5 py-1 text-xs font-mono focus:ring-1 focus:ring-amber-500"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

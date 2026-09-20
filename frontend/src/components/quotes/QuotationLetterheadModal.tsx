@@ -1,25 +1,30 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
-  Download,
-  Share2,
+  FileText,
+  Printer,
   X,
   Building2,
   Phone,
   Mail,
   Globe,
-  FileCheck,
+  Download,
+  IndianRupee,
+  Share2,
+  Check,
   CheckCircle2,
-  ExternalLink,
-  ShieldCheck,
   Sparkles,
-  FileText,
+  Info,
+  ShieldCheck,
+  Calendar,
+  ExternalLink,
+  FileCheck,
   Layers,
 } from "lucide-react";
 import Link from "next/link";
 import { QuoteProposal } from "@/app/(dashboard)/quotes/page";
-import { getLetterheadConfig, CompanyLetterheadConfig } from "@/data/letterheadConfig";
+import { getLetterheadConfig, defaultLetterheadConfig, CompanyLetterheadConfig } from "@/data/letterheadConfig";
 import { generateQuotePdf } from "@/utils/generateQuotePdf";
 
 interface QuotationLetterheadModalProps {
@@ -33,12 +38,18 @@ export function QuotationLetterheadModal({
   isOpen,
   onClose,
 }: QuotationLetterheadModalProps) {
-  const config = getLetterheadConfig();
+  const [config, setConfig] = useState<CompanyLetterheadConfig>(defaultLetterheadConfig);
   const printRef = useRef<HTMLDivElement>(null);
-  const [activeMode, setActiveMode] = useState<"digital" | "uploadedPdf" | "prePrinted">(
-    config.letterheadMode || "digital"
-  );
+  const [activeMode, setActiveMode] = useState<"digital" | "uploadedPdf" | "prePrinted">("digital");
   const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const loaded = getLetterheadConfig();
+      setConfig(loaded);
+      setActiveMode(loaded.letterheadMode || "digital");
+    }
+  }, [isOpen]);
 
   if (!isOpen || !quote) return null;
 

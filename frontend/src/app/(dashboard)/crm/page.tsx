@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   UserCheck,
@@ -26,6 +26,7 @@ import {
   Users,
   CheckSquare,
   Compass,
+  GripVertical,
 } from "lucide-react";
 import { LeadItem, ClientDirectoryItem, LeadStage } from "@/types";
 import { LEAD_STAGES, initialLeads, initialClients } from "@/data/crmData";
@@ -132,6 +133,11 @@ export default function CRMPage() {
     });
   }, [clients, searchQuery]);
 
+  // Drag and Drop state
+  const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
+  const [activeDropCol, setActiveDropCol] = useState<LeadStage | null>(null);
+  const draggedLeadIdRef = useRef<string | null>(null);
+
   // Handle stage movement
   const handleMoveStage = (leadId: string, newStage: LeadStage) => {
     setLeads((prev) =>
@@ -140,6 +146,51 @@ export default function CRMPage() {
     if (selectedLeadForDetail?.id === leadId) {
       setSelectedLeadForDetail((prev) => (prev ? { ...prev, stage: newStage } : null));
     }
+  };
+
+  // Drag & Drop event handlers
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    draggedLeadIdRef.current = id;
+    setDraggedLeadId(id);
+    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragEnd = () => {
+    draggedLeadIdRef.current = null;
+    setDraggedLeadId(null);
+    setActiveDropCol(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, colId: LeadStage) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (activeDropCol !== colId) {
+      setActiveDropCol(colId);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, colId: LeadStage) => {
+    const related = e.relatedTarget as HTMLElement | null;
+    if (!related || !e.currentTarget.contains(related)) {
+      if (activeDropCol === colId) {
+        setActiveDropCol(null);
+      }
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetStage: LeadStage) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const leadId = draggedLeadIdRef.current || e.dataTransfer.getData("text/plain") || draggedLeadId;
+    if (leadId) {
+      handleMoveStage(leadId, targetStage);
+    }
+
+    draggedLeadIdRef.current = null;
+    setDraggedLeadId(null);
+    setActiveDropCol(null);
   };
 
   // Handle New Lead Submit
@@ -252,6 +303,9 @@ export default function CRMPage() {
             <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               Studio CRM & Client Pipeline
             </h1>
+            <span className="hidden sm:inline-flex items-center font-mono text-[10px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+              Drag & Drop Enabled
+            </span>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
             Lead qualification, site surveys, client lifetime directory & live portal access
@@ -451,7 +505,14 @@ export default function CRMPage() {
             return (
               <div
                 key={col.id}
-                className="bg-zinc-100/70 dark:bg-zinc-900/60 rounded-lg p-2.5 border border-zinc-200/80 dark:border-zinc-800/80 flex flex-col min-h-[480px]"
+                onDragOver={(e) => handleDragOver(e, col.id)}
+                onDragLeave={(e) => handleDragLeave(e, col.id)}
+                onDrop={(e) => handleDrop(e, col.id)}
+                className={`rounded-lg p-2.5 border transition-all flex flex-col min-h-[500px] ${
+                  activeDropCol === col.id
+                    ? "bg-zinc-200/90 dark:bg-zinc-800/90 border-zinc-950 dark:border-zinc-100 ring-2 ring-zinc-950/20 dark:ring-zinc-100/20 scale-[1.01]"
+                    : "bg-zinc-100/70 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-800/80"
+                }`}
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800 mb-2.5 px-1">
@@ -470,145 +531,164 @@ export default function CRMPage() {
 
                 {/* Lead Cards in Column */}
                 <div className="space-y-2.5 flex-1">
-                  {colLeads.length === 0 ? (
+                  {colLeads.length === 0 && activeDropCol !== col.id ? (
                     <div className="h-24 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-md flex items-center justify-center text-[11px] text-zinc-400">
                       No leads in stage
                     </div>
-                  ) : (
-                    colLeads.map((lead) => (
-                      <div
-                        key={lead.id}
-                        className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-3 shadow-xs hover:border-zinc-400 dark:hover:border-zinc-700 transition space-y-2.5 group cursor-pointer"
-                        onClick={() => setSelectedLeadForDetail(lead)}
-                      >
-                        {/* Top: Lead Code & Source Tag */}
-                        <div className="flex items-center justify-between gap-1.5">
+                  ) : null}
+
+                  {colLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, lead.id)}
+                      onDragEnd={handleDragEnd}
+                      className={`bg-white dark:bg-zinc-900 border rounded-md p-3 shadow-xs transition space-y-2.5 group cursor-grab active:cursor-grabbing select-none ${
+                        draggedLeadId === lead.id
+                          ? "opacity-30 border-dashed border-zinc-400 dark:border-zinc-600 scale-95"
+                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700"
+                      }`}
+                      onClick={() => setSelectedLeadForDetail(lead)}
+                    >
+                      {/* Top: Grip Handle, Lead Code & Source Tag */}
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <GripVertical className="w-3.5 h-3.5 text-zinc-400 opacity-40 group-hover:opacity-100 transition cursor-grab" />
                           <span className="text-[10px] font-mono font-semibold text-zinc-500 dark:text-zinc-400">
                             {lead.leadNumber}
                           </span>
-                          <span className="text-[9px] uppercase px-1.5 py-0.5 rounded font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-                            {lead.leadSource}
-                          </span>
                         </div>
+                        <span className="text-[9px] uppercase px-1.5 py-0.5 rounded font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                          {lead.leadSource}
+                        </span>
+                      </div>
 
-                        {/* Client Name & Property Info */}
+                      {/* Client Name & Property Info */}
+                      <div>
+                        <div className="text-xs font-bold text-zinc-950 dark:text-zinc-50 group-hover:text-zinc-900 dark:group-hover:text-white">
+                          {lead.clientName}
+                        </div>
+                        <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
+                          <Building2 className="w-3 h-3 text-zinc-400" />
+                          <span>{lead.propertyType}</span>
+                          <span>•</span>
+                          <span className="font-mono">{lead.carpetAreaSqFt.toLocaleString("en-IN")} sq.ft</span>
+                        </div>
+                        <div className="text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-zinc-400" />
+                          <span>{lead.city}</span>
+                        </div>
+                      </div>
+
+                      {/* Budget & Assignee */}
+                      <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
                         <div>
-                          <div className="text-xs font-bold text-zinc-950 dark:text-zinc-50 group-hover:text-zinc-900 dark:group-hover:text-white">
-                            {lead.clientName}
-                          </div>
-                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
-                            <Building2 className="w-3 h-3 text-zinc-400" />
-                            <span>{lead.propertyType}</span>
-                            <span>•</span>
-                            <span className="font-mono">{lead.carpetAreaSqFt.toLocaleString("en-IN")} sq.ft</span>
-                          </div>
-                          <div className="text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
-                            <MapPin className="w-3 h-3 text-zinc-400" />
-                            <span>{lead.city}</span>
+                          <div className="text-[9px] text-zinc-400 uppercase font-mono">Budget</div>
+                          <div className="text-xs font-bold font-mono text-zinc-900 dark:text-zinc-100">
+                            {formatINR(lead.estimatedBudget)}
                           </div>
                         </div>
-
-                        {/* Budget & Assignee */}
-                        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
-                          <div>
-                            <div className="text-[9px] text-zinc-400 uppercase font-mono">Budget</div>
-                            <div className="text-xs font-bold font-mono text-zinc-900 dark:text-zinc-100">
-                              {formatINR(lead.estimatedBudget)}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-[9px] text-zinc-400 uppercase font-mono">Designer</div>
-                            <div className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
-                              {lead.assignedDesigner}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Scheduled Site Visit or Next Followup Tag */}
-                        {lead.siteVisitDate && (
-                          <div className="bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1 flex items-center gap-1.5 text-[10px] text-amber-700 dark:text-amber-400">
-                            <Calendar className="w-3 h-3 text-amber-500" />
-                            <span>Site Visit: {lead.siteVisitDate}</span>
-                          </div>
-                        )}
-
-                        {lead.convertedProjectCode && (
-                          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-1 flex items-center justify-between text-[10px] text-emerald-700 dark:text-emerald-400">
-                            <span className="font-medium">OS Project: {lead.convertedProjectCode}</span>
-                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                          </div>
-                        )}
-
-                        {/* Interactive Footer Actions */}
-                        <div
-                          className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-1.5"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex items-center gap-1">
-                            {/* WhatsApp Button */}
-                            <a
-                              href={`https://wa.me/${lead.clientPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                                `Hello ${lead.clientName}, this is from the Architectural Design Studio regarding your interior project inquiry (${lead.propertyType} in ${lead.city}). Would you like to review preliminary moodboards or schedule site measurements?`
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Chat on WhatsApp"
-                              className="p-1.5 rounded text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition"
-                            >
-                              <MessageCircle className="w-3.5 h-3.5" />
-                            </a>
-
-                            {/* Phone Call */}
-                            <a
-                              href={`tel:${lead.clientPhone}`}
-                              title="Call Client"
-                              className="p-1.5 rounded text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                            </a>
-                          </div>
-
-                          {/* Quick Stage Mover or Convert Button */}
-                          <div className="flex items-center gap-1">
-                            {lead.stage !== "won" ? (
-                              <select
-                                value={lead.stage}
-                                onChange={(e) => handleMoveStage(lead.id, e.target.value as LeadStage)}
-                                className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-1 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
-                              >
-                                <option value="new_inquiry">1. Inquiry</option>
-                                <option value="site_consultation">2. Site Visit</option>
-                                <option value="concept_pitch">3. Pitch</option>
-                                <option value="negotiation">4. Negotiate</option>
-                                <option value="won">5. Won</option>
-                              </select>
-                            ) : (
-                              <span className="text-[10px] font-mono text-emerald-600 font-bold px-1 py-0.5">
-                                Won Deal
-                              </span>
-                            )}
-
-                            {/* Convert to Project Action */}
-                            {!lead.convertedProjectCode && (lead.stage === "won" || lead.stage === "negotiation") && (
-                              <button
-                                onClick={() => {
-                                  setConvertingLead(lead);
-                                  setConvertForm({
-                                    projectName: `${lead.clientName} - ${lead.propertyType}`,
-                                    projectCode: `P-${Math.floor(100 + Math.random() * 900)}`,
-                                    pmName: "Rohan Malhotra",
-                                    targetHandover: "2027-03-15",
-                                  });
-                                }}
-                                className="text-[10px] bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-medium px-2 py-0.5 rounded hover:opacity-90 transition cursor-pointer"
-                              >
-                                Convert
-                              </button>
-                            )}
+                        <div className="text-right">
+                          <div className="text-[9px] text-zinc-400 uppercase font-mono">Designer</div>
+                          <div className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+                            {lead.assignedDesigner}
                           </div>
                         </div>
                       </div>
-                    ))
+
+                      {/* Scheduled Site Visit or Next Followup Tag */}
+                      {lead.siteVisitDate && (
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1 flex items-center gap-1.5 text-[10px] text-amber-700 dark:text-amber-400">
+                          <Calendar className="w-3 h-3 text-amber-500" />
+                          <span>Site Visit: {lead.siteVisitDate}</span>
+                        </div>
+                      )}
+
+                      {lead.convertedProjectCode && (
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-1 flex items-center justify-between text-[10px] text-emerald-700 dark:text-emerald-400">
+                          <span className="font-medium">OS Project: {lead.convertedProjectCode}</span>
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        </div>
+                      )}
+
+                      {/* Interactive Footer Actions */}
+                      <div
+                        className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1">
+                          {/* WhatsApp Button */}
+                          <a
+                            href={`https://wa.me/${lead.clientPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                              `Hello ${lead.clientName}, this is from the Architectural Design Studio regarding your interior project inquiry (${lead.propertyType} in ${lead.city}). Would you like to review preliminary moodboards or schedule site measurements?`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            draggable={false}
+                            title="Chat on WhatsApp"
+                            className="p-1.5 rounded text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </a>
+
+                          {/* Phone Call */}
+                          <a
+                            href={`tel:${lead.clientPhone}`}
+                            draggable={false}
+                            title="Call Client"
+                            className="p-1.5 rounded text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+
+                        {/* Quick Stage Mover or Convert Button */}
+                        <div className="flex items-center gap-1">
+                          {lead.stage !== "won" ? (
+                            <select
+                              value={lead.stage}
+                              onChange={(e) => handleMoveStage(lead.id, e.target.value as LeadStage)}
+                              className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-1 py-0.5 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                            >
+                              <option value="new_inquiry">1. Inquiry</option>
+                              <option value="site_consultation">2. Site Visit</option>
+                              <option value="concept_pitch">3. Pitch</option>
+                              <option value="negotiation">4. Negotiate</option>
+                              <option value="won">5. Won</option>
+                            </select>
+                          ) : (
+                            <span className="text-[10px] font-mono text-emerald-600 font-bold px-1 py-0.5">
+                              Won Deal
+                            </span>
+                          )}
+
+                          {/* Convert to Project Action */}
+                          {!lead.convertedProjectCode && (lead.stage === "won" || lead.stage === "negotiation") && (
+                            <button
+                              onClick={() => {
+                                setConvertingLead(lead);
+                                setConvertForm({
+                                  projectName: `${lead.clientName} - ${lead.propertyType}`,
+                                  projectCode: `P-${Math.floor(100 + Math.random() * 900)}`,
+                                  pmName: "Rohan Malhotra",
+                                  targetHandover: "2027-03-15",
+                                });
+                              }}
+                              className="text-[10px] bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-medium px-2 py-0.5 rounded hover:opacity-90 transition cursor-pointer"
+                            >
+                              Convert
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Active Drop Placeholder */}
+                  {activeDropCol === col.id && (
+                    <div className="p-3 border-2 border-dashed border-zinc-900 dark:border-zinc-100 rounded-md bg-zinc-900/5 dark:bg-zinc-100/5 text-center text-xs font-mono font-medium text-zinc-900 dark:text-zinc-100 animate-pulse">
+                      Drop lead into {col.label}
+                    </div>
                   )}
                 </div>
               </div>

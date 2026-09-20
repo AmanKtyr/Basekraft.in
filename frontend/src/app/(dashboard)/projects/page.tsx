@@ -14,7 +14,7 @@ function ProjectsContent() {
   const initialStage = searchParams.get("stage") || "all";
 
   const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("kanban");
   const [selectedStage, setSelectedStage] = useState<string>(initialStage);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
