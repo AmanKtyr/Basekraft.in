@@ -149,3 +149,50 @@ export interface TeamMember {
   avatarUrl?: string;
 }
 
+export type LeadStage =
+  | "new_inquiry"
+  | "site_consultation"
+  | "concept_pitch"
+  | "negotiation"
+  | "won"
+  | "dropped";
+
+export interface LeadItem {
+  id: string;
+  leadNumber: string;
+  clientName: string;
+  clientPhone: string;
+  clientEmail?: string;
+  city: string;
+  propertyType: "Residential 3BHK" | "Luxury Villa" | "Commercial Office" | "Retail Boutique" | "Penthouse" | "F&B / Hospitality";
+  carpetAreaSqFt: number;
+  estimatedBudget: number; // in INR
+  stage: LeadStage;
+  leadSource: "Referral" | "Instagram / Social" | "Architect Network" | "Website Inbound" | "Walk-in";
+  assignedDesigner: string;
+  notes: string;
+  nextFollowupDate?: string;
+  siteVisitDate?: string;
+  convertedProjectCode?: string;
+  createdAt: string;
+}
+
+export interface ClientDirectoryItem {
+  id: string;
+  clientName: string;
+  companyName?: string;
+  clientPhone: string;
+  clientEmail?: string;
+  city: string;
+  activeProjectsCount: number;
+  lifetimeValue: number; // Total billed/committed in INR
+  status: "Active" | "Prospect" | "Completed";
+  primaryProjectCode?: string;
+  portalCode?: string;
+  leadSource: string;
+  clientSince: string;
+  lastInteraction: string;
+  avatar?: string;
+}
+
+

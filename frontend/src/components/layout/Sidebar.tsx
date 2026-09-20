@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FolderKanban,
+  UserCheck,
   CheckSquare,
   FileSpreadsheet,
   ShoppingCart,
@@ -47,6 +48,12 @@ const navSections: NavSection[] = [
         href: "/projects",
         icon: FolderKanban,
         badge: "5",
+      },
+      {
+        label: "CRM & Leads",
+        href: "/crm",
+        icon: UserCheck,
+        badge: "4",
       },
       {
         label: "All Tasks",
