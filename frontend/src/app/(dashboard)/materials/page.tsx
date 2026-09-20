@@ -132,87 +132,87 @@ export default function MaterialsPage() {
 
       {/* Materials Master Data Table (Exact ProjectStudio Mirror + Enhanced) */}
       <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-950 shadow-xs">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 text-zinc-400 font-mono text-[11px]">
-              <th className="py-3 px-3 w-24">Created</th>
-              <th className="py-3 px-3 w-12 text-center">Image</th>
-              <th className="py-3 px-4">Item Name & Spec</th>
-              <th className="py-3 px-3 font-sans text-right">Client Rate</th>
-              <th className="py-3 px-3 font-sans text-right">Purchase Rate</th>
-              <th className="py-3 px-3 text-center">UOM</th>
-              <th className="py-3 px-3 text-center">GST</th>
-              <th className="py-3 px-4">Sector & Tag</th>
-              <th className="py-3 px-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {filteredMaterials.map((mat) => (
-              <tr key={mat.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40 transition">
-                {/* Date */}
-                <td className="py-3.5 px-3 font-mono text-zinc-500 text-[11px] whitespace-nowrap">
-                  {mat.createdOn}
-                </td>
-
-                {/* Image Placeholder */}
-                <td className="py-3.5 px-3 text-center">
-                  <div className="w-8 h-8 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mx-auto text-zinc-400">
-                    <ImageIcon className="w-4 h-4" />
-                  </div>
-                </td>
-
-                {/* Name & Description */}
-                <td className="py-3.5 px-4 max-w-sm">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100 block text-xs">
-                    {mat.name}
-                  </span>
-                  <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-1">{mat.description}</p>
-                </td>
-
-                {/* Client Rate */}
-                <td className="py-3.5 px-3 text-right font-mono font-bold text-zinc-950 dark:text-zinc-100">
-                  ₹{mat.clientRate.toFixed(2)}
-                </td>
-
-                {/* Purchase Rate */}
-                <td className="py-3.5 px-3 text-right font-mono text-zinc-500">
-                  ₹{mat.purchaseRate.toFixed(2)}
-                </td>
-
-                {/* UOM */}
-                <td className="py-3.5 px-3 text-center">
-                  <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium">
-                    {mat.uom}
-                  </span>
-                </td>
-
-                {/* GST */}
-                <td className="py-3.5 px-3 text-center font-mono text-zinc-500">
-                  {mat.gstPercent}%
-                </td>
-
-                {/* Sector Tag */}
-                <td className="py-3.5 px-4">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 whitespace-nowrap">
-                    {mat.sectorTag}
-                  </span>
-                </td>
-
-                {/* Action Buttons */}
-                <td className="py-3.5 px-3 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <button className="p-1 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button className="p-1 rounded text-zinc-400 hover:text-red-600 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[780px]">
+            <thead>
+              <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 text-zinc-400 font-mono text-[11px]">
+                <th className="py-3 px-3 w-24">Created</th>
+                <th className="py-3 px-3 w-12 text-center">Image</th>
+                <th className="py-3 px-4">Item Name & Spec</th>
+                <th className="py-3 px-3 font-sans text-right">Client Rate</th>
+                <th className="py-3 px-3 font-sans text-right">Purchase Rate</th>
+                <th className="py-3 px-3 text-center">UOM</th>
+                <th className="py-3 px-3 text-center">GST</th>
+                <th className="py-3 px-4">Sector & Tag</th>
+                <th className="py-3 px-3 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {filteredMaterials.map((mat) => (
+                <tr key={mat.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40 transition">
+                  {/* Date */}
+                  <td className="py-3.5 px-3 font-mono text-zinc-500 text-[11px] whitespace-nowrap">
+                    {mat.createdOn}
+                  </td>
+
+                  {/* Image Placeholder */}
+                  <td className="py-3.5 px-3 text-center">
+                    <div className="w-8 h-8 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mx-auto text-zinc-400">
+                      <ImageIcon className="w-4 h-4" />
+                    </div>
+                  </td>
+
+                  {/* Name & Description */}
+                  <td className="py-3.5 px-4 max-w-sm">
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100 block text-xs">
+                      {mat.name}
+                    </span>
+                    <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-1">{mat.description}</p>
+                  </td>
+
+                  {/* Client Rate */}
+                  <td className="py-3.5 px-3 text-right font-mono font-bold text-zinc-950 dark:text-zinc-100">
+                    ₹{mat.clientRate.toFixed(2)}
+                  </td>
+
+                  {/* Purchase Rate */}
+                  <td className="py-3.5 px-3 text-right font-mono text-zinc-500">
+                    ₹{mat.purchaseRate.toFixed(2)}
+                  </td>
+
+                  {/* UOM */}
+                  <td className="py-3.5 px-3 text-center font-mono text-zinc-600 dark:text-zinc-400">
+                    {mat.uom}
+                  </td>
+
+                  {/* GST */}
+                  <td className="py-3.5 px-3 text-center font-mono text-zinc-500">
+                    {mat.gstPercent}%
+                  </td>
+
+                  {/* Sector Tag */}
+                  <td className="py-3.5 px-4">
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                      {mat.sectorTag}
+                    </span>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="py-3.5 px-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button className="p-1 rounded text-zinc-400 hover:text-red-600 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

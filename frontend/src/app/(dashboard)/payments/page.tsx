@@ -40,9 +40,9 @@ export function NewPaymentRequestModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="px-5 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
               New Site Payment Request
@@ -59,7 +59,7 @@ export function NewPaymentRequestModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
           <div className="space-y-1.5">
             <label className="font-medium text-zinc-700 dark:text-zinc-300">Select Project *</label>
             <select
@@ -196,7 +196,8 @@ export default function PaymentsPage() {
 
       {/* Requests Table */}
       <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-950 shadow-xs">
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[650px]">
           <thead>
             <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 text-zinc-400 font-mono text-[11px]">
               <th className="py-3 px-4">Project</th>
@@ -259,6 +260,7 @@ export default function PaymentsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       <NewPaymentRequestModal

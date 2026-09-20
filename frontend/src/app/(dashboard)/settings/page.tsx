@@ -2,6 +2,12 @@
 
 import React, { useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import {
+  getLetterheadConfig,
+  saveLetterheadConfig,
+  CompanyLetterheadConfig,
+} from "@/data/letterheadConfig";
 import {
   Search,
   CreditCard,
@@ -32,6 +38,7 @@ import {
   FileSpreadsheet,
   MoreVertical,
   ExternalLink,
+  FileText,
   Pencil,
   AlertCircle,
   Clock,
@@ -74,14 +81,13 @@ interface NavItem {
   id: SettingsTab;
   label: string;
   icon: React.ElementType;
-  badge?: string;
 }
 
 const navItems: NavItem[] = [
-  { id: "subscription", label: "Subscription", icon: CreditCard, badge: "9 Seats" },
+  { id: "subscription", label: "Subscription", icon: CreditCard },
   { id: "organizationDetails", label: "Organization Details", icon: Building2 },
   { id: "listingPage", label: "Listing Page", icon: Globe },
-  { id: "aiProCredit", label: "AI Pro Credit", icon: Sparkles, badge: "4,850" },
+  { id: "aiProCredit", label: "AI Pro Credit", icon: Sparkles },
   { id: "itemMaster", label: "Item Master", icon: Box },
   { id: "materialsMaster", label: "Materials Master", icon: Layers },
   { id: "checklistMaster", label: "Checklist Master", icon: ClipboardCheck },
@@ -89,12 +95,12 @@ const navItems: NavItem[] = [
   { id: "activity", label: "Activity", icon: Activity },
   { id: "manpower", label: "Manpower", icon: HardHat },
   { id: "vendors", label: "Vendors", icon: Truck },
-  { id: "users", label: "Users", icon: Users, badge: "7" },
+  { id: "users", label: "Users", icon: Users },
   { id: "permissions", label: "Permissions", icon: ShieldCheck },
   { id: "configuration", label: "Configuration", icon: Wrench },
-  { id: "automation", label: "Automation", icon: Lightbulb, badge: "5 Rules" },
+  { id: "automation", label: "Automation", icon: Lightbulb },
   { id: "hrPolicies", label: "HR & Policies", icon: Calendar },
-  { id: "integrations", label: "Integrations", icon: Share2, badge: "Connected" },
+  { id: "integrations", label: "Integrations", icon: Share2 },
 ];
 
 function SettingsContent() {
@@ -135,6 +141,11 @@ function SettingsContent() {
     accountType: "Current Account",
     udyamNumber: "UDYAM-HR-05-0039210",
   });
+
+  // Company Letterhead & Proposal State
+  const [letterheadConfig, setLetterheadConfig] = useState<CompanyLetterheadConfig>(getLetterheadConfig());
+  const [isEditingLetterhead, setIsEditingLetterhead] = useState(false);
+  const [letterheadSavedToast, setLetterheadSavedToast] = useState(false);
 
   // HR Holidays Calendar State
   const [holidaysList, setHolidaysList] = useState([
@@ -393,8 +404,8 @@ function SettingsContent() {
           </p>
         </div>
 
-        {/* Mobile & Responsive Dropdown Selector */}
-        <div className="sm:hidden w-full">
+        {/* Mobile & Responsive Dropdown Selector (< md) */}
+        <div className="md:hidden w-full pt-1">
           <label className="text-[11px] font-medium text-zinc-500 block mb-1">Select Settings Page</label>
           <div className="relative">
             <select
@@ -413,10 +424,10 @@ function SettingsContent() {
         </div>
       </div>
 
-      {/* Main 2-Column Settings Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* Left Sub-Nav Rail (ProjectStudio style) */}
-        <div className="hidden md:block md:col-span-3 lg:col-span-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2.5 space-y-2 sticky top-20 shadow-xs">
+      {/* Main Settings Layout with Compact Sub-Nav Rail */}
+      <div className="flex flex-col md:flex-row gap-5 items-start">
+        {/* Left Sub-Nav Rail (Clean, compact width without blank space) */}
+        <div className="hidden md:block w-52 lg:w-56 shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2.5 space-y-2 sticky top-20 shadow-xs">
           {/* Search Box */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-2.5" />
@@ -438,7 +449,7 @@ function SettingsContent() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-medium transition cursor-pointer ${
+                  className={`w-full flex items-center px-2.5 py-2 rounded-md text-xs font-medium transition cursor-pointer ${
                     isActive
                       ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 font-semibold shadow-xs"
                       : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
@@ -448,25 +459,14 @@ function SettingsContent() {
                     <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-zinc-950 dark:text-zinc-100" : "text-zinc-400"}`} />
                     <span className="truncate">{item.label}</span>
                   </div>
-                  {item.badge && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                        isActive
-                          ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Right Content Panel */}
-        <div className="md:col-span-9 lg:col-span-9 space-y-6">
+        {/* Right Content Panel - Expansive & Clean */}
+        <div className="flex-1 min-w-0 space-y-6">
           {/* TAB 1: Organization Details */}
           {activeTab === "organizationDetails" && (
             <div className="space-y-6">
@@ -752,6 +752,390 @@ function SettingsContent() {
                       onChange={(e) => setBankInfo({ ...bankInfo, udyamNumber: e.target.value })}
                       className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Official Quotation Letterhead & Proposal Template */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <span>Quotation Letterhead & Commercial Proposal Template</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 font-mono font-bold">
+                        Live on /quotes
+                      </span>
+                    </h3>
+                    <p className="text-xs text-zinc-500">
+                      Customize how client proposals, BOQ printouts, bank details, and digital signatures appear on official documents
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/quotes"
+                      className="px-2.5 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition shadow-xs flex items-center gap-1"
+                    >
+                      <span>Preview on Quotes</span>
+                      <ExternalLink className="w-3 h-3 text-zinc-400" />
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isEditingLetterhead) {
+                          saveLetterheadConfig(letterheadConfig);
+                          setLetterheadSavedToast(true);
+                          setTimeout(() => setLetterheadSavedToast(false), 3000);
+                        }
+                        setIsEditingLetterhead(!isEditingLetterhead);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 rounded-md transition shadow-xs cursor-pointer"
+                    >
+                      {isEditingLetterhead ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Save Letterhead</span>
+                        </>
+                      ) : (
+                        <>
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit Letterhead</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {letterheadSavedToast && (
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-md text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2 animate-in fade-in duration-150">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Company Letterhead & Proposal Template updated successfully! All quotations and PDF printouts now use this branding.</span>
+                  </div>
+                )}
+
+                {/* Letterhead Mode Switcher & PDF Upload Option */}
+                <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                        Proposal Letterhead Mode
+                      </h4>
+                      <p className="text-[11px] text-zinc-500">
+                        Choose whether the system generates your letterhead, overlays your uploaded PDF stationery, or prints for pre-printed physical paper
+                      </p>
+                    </div>
+
+                    {/* 3 Modes */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={!isEditingLetterhead}
+                        onClick={() => setLetterheadConfig({ ...letterheadConfig, letterheadMode: "digital" })}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer ${
+                          letterheadConfig.letterheadMode === "digital"
+                            ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-xs"
+                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                        }`}
+                      >
+                        Digital Letterhead
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={!isEditingLetterhead}
+                        onClick={() => setLetterheadConfig({ ...letterheadConfig, letterheadMode: "uploadedPdf" })}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1 ${
+                          letterheadConfig.letterheadMode === "uploadedPdf"
+                            ? "bg-blue-600 text-white font-semibold shadow-xs"
+                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                        }`}
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Upload Custom PDF</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={!isEditingLetterhead}
+                        onClick={() => setLetterheadConfig({ ...letterheadConfig, letterheadMode: "prePrinted" })}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer ${
+                          letterheadConfig.letterheadMode === "prePrinted"
+                            ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-xs"
+                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                        }`}
+                      >
+                        Pre-Printed Paper
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* UPLOAD PDF SECTION */}
+                  {letterheadConfig.letterheadMode === "uploadedPdf" && (
+                    <div className="p-3.5 rounded-md bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                            <Upload className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                              <span>{letterheadConfig.uploadedPdfName || "Upload Official Letterhead (PDF / PNG / JPG)"}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-mono">
+                                PDF Stationery
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-zinc-500">
+                              Upload your company&apos;s official A4 letterhead graphic. The quote table and totals will overlay cleanly onto this template.
+                            </p>
+                          </div>
+                        </div>
+
+                        {isEditingLetterhead && (
+                          <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded cursor-pointer transition shadow-xs shrink-0 text-center">
+                            <span>Choose PDF / Image</span>
+                            <input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setLetterheadConfig({
+                                    ...letterheadConfig,
+                                    uploadedPdfName: file.name,
+                                    letterheadMode: "uploadedPdf",
+                                  });
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+
+                      {/* Margin adjustments for custom template */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-blue-200/60 dark:border-blue-900/30 text-xs">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+                            Header Top Clearance Margin (mm)
+                          </label>
+                          <input
+                            type="number"
+                            disabled={!isEditingLetterhead}
+                            value={letterheadConfig.topMarginMm || 42}
+                            onChange={(e) => setLetterheadConfig({ ...letterheadConfig, topMarginMm: Number(e.target.value) })}
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+                            Footer Bottom Clearance Margin (mm)
+                          </label>
+                          <input
+                            type="number"
+                            disabled={!isEditingLetterhead}
+                            value={letterheadConfig.bottomMarginMm || 28}
+                            onChange={(e) => setLetterheadConfig({ ...letterheadConfig, bottomMarginMm: Number(e.target.value) })}
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PRE-PRINTED PHYSICAL PAPER NOTICE */}
+                  {letterheadConfig.letterheadMode === "prePrinted" && (
+                    <div className="p-3.5 rounded-md bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-xs space-y-1">
+                      <div className="font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                        <Info className="w-3.5 h-3.5" />
+                        <span>Pre-Printed Stationery Offset Mode Active</span>
+                      </div>
+                      <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                        When printing quotes, the digital studio header and footer will be hidden. The proposal body will print with a {letterheadConfig.topMarginMm || 42}mm top margin, designed specifically to feed into office printers loaded with physical letterhead stationery.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Studio Brand Header</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.studioBrand}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, studioBrand: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Tagline / Subheading</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.tagline}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, tagline: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">CIN / Corporate Registration</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.cin}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, cin: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Official Contact Email</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.email}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, email: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Official Contact Phone</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.phone}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, phone: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Website URL</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.website}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, website: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Bank Name</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.bankName}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, bankName: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Account Beneficiary Name</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.accountName}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, accountName: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Account Number</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.accountNumber}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, accountNumber: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">IFSC Code</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.ifscCode}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, ifscCode: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Direct Settlement UPI ID</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.upiId}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, upiId: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 font-mono text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Bank Branch</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.branch}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, branch: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Authorized Signatory Name</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.signatoryName}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, signatoryName: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-zinc-600 dark:text-zinc-400 font-medium">Authorized Signatory Official Title</label>
+                    <input
+                      type="text"
+                      disabled={!isEditingLetterhead}
+                      value={letterheadConfig.signatoryTitle}
+                      onChange={(e) => setLetterheadConfig({ ...letterheadConfig, signatoryTitle: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Standard Terms & Conditions Clause List */}
+                <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <label className="text-zinc-700 dark:text-zinc-300 font-medium text-xs block">
+                    Commercial Proposal Terms & Payment Clauses (Displayed on Letterhead)
+                  </label>
+                  <div className="space-y-2">
+                    {letterheadConfig.termsAndConditions.map((clause, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center font-mono text-[10px] shrink-0">
+                          {idx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          disabled={!isEditingLetterhead}
+                          value={clause}
+                          onChange={(e) => {
+                            const updated = [...letterheadConfig.termsAndConditions];
+                            updated[idx] = e.target.value;
+                            setLetterheadConfig({ ...letterheadConfig, termsAndConditions: updated });
+                          }}
+                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 disabled:opacity-85 focus:outline-none"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1898,9 +2282,9 @@ function SettingsContent() {
 
               {/* Add Holiday Modal */}
               {isAddHolidayModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-md w-full shadow-2xl overflow-hidden">
-                    <div className="px-5 py-3.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-md w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="px-5 py-3.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-zinc-500" />
                         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -1909,7 +2293,7 @@ function SettingsContent() {
                       </div>
                       <button
                         onClick={() => setIsAddHolidayModalOpen(false)}
-                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1940,7 +2324,7 @@ function SettingsContent() {
                         setNewHolidayName("");
                         setIsAddHolidayModalOpen(false);
                       }}
-                      className="p-5 space-y-4 text-xs"
+                      className="p-5 space-y-4 text-xs overflow-y-auto flex-1"
                     >
                       <div className="space-y-1.5">
                         <label className="font-medium text-zinc-700 dark:text-zinc-300">
@@ -2167,9 +2551,9 @@ function SettingsContent() {
 
               {/* MODAL 1: WhatsApp Connection Flow */}
               {isWhatsAppModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs">
                           WA
@@ -2183,7 +2567,7 @@ function SettingsContent() {
                       </div>
                       <button
                         onClick={() => setIsWhatsAppModalOpen(false)}
-                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -2195,7 +2579,7 @@ function SettingsContent() {
                         setWhatsappConfig({ ...whatsappConfig, isConnected: true });
                         setIsWhatsAppModalOpen(false);
                       }}
-                      className="p-5 space-y-3.5 text-xs"
+                      className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1"
                     >
                       <div className="space-y-1">
                         <label className="font-medium text-zinc-700 dark:text-zinc-300">
@@ -2309,9 +2693,9 @@ function SettingsContent() {
 
               {/* MODAL 2: Razorpay Connection Flow */}
               {isRazorpayModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-xs">
                           RZ
@@ -2325,7 +2709,7 @@ function SettingsContent() {
                       </div>
                       <button
                         onClick={() => setIsRazorpayModalOpen(false)}
-                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                        className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -2337,7 +2721,7 @@ function SettingsContent() {
                         setRazorpayConfig({ ...razorpayConfig, isConnected: true });
                         setIsRazorpayModalOpen(false);
                       }}
-                      className="p-5 space-y-3.5 text-xs"
+                      className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1"
                     >
                       {/* Environment Mode Switch */}
                       <div className="space-y-1">

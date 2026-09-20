@@ -29,7 +29,7 @@ export function GanttChart() {
 
   return (
     <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 shadow-xs space-y-4">
-      <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-zinc-200 dark:border-zinc-800">
         <div>
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Interactive Milestone Schedule (Gantt)

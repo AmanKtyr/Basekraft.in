@@ -104,7 +104,7 @@ export function ProjectsTable({ projects, selectedStage, onSelectStage }: Projec
       {/* Main Clean Table */}
       <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-950 shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs min-w-[750px]">
             <thead>
               <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400 font-medium">
                 <th className="py-3 px-4 w-24 font-mono">Code</th>

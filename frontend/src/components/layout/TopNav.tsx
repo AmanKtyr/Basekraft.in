@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Laptop,
+  Menu,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,6 +28,7 @@ import { initialProjects } from "@/data/mockData";
 
 interface TopNavProps {
   onOpenNewProject?: () => void;
+  onToggleMobileMenu?: () => void;
 }
 
 interface NotificationItem {
@@ -78,7 +80,7 @@ const initialNotifications: NotificationItem[] = [
   },
 ];
 
-export function TopNav({ onOpenNewProject }: TopNavProps) {
+export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
   const router = useRouter();
   const [isDark, setIsDark] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -106,6 +108,18 @@ export function TopNav({ onOpenNewProject }: TopNavProps) {
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        const input = searchContainerRef.current?.querySelector("input");
+        input?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Close menus on outside click
   useEffect(() => {
@@ -135,31 +149,43 @@ export function TopNav({ onOpenNewProject }: TopNavProps) {
   );
 
   return (
-    <header className="h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none">
-      {/* Search Input with Dynamic Results Dropdown */}
-      <div className="relative flex items-center gap-4 flex-1 max-w-md" ref={searchContainerRef}>
-        <div className="relative w-full">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search projects, clients, BOQ codes (e.g. P-619)..."
-            value={searchQuery}
-            onFocus={() => setIsSearchFocused(true)}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md pl-9 pr-14 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100 transition"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[10px] text-zinc-400 font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 pointer-events-none">
-            <Command className="w-2.5 h-2.5" />
-            <span>K</span>
-          </div>
-        </div>
+    <header className="h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none">
+      {/* Left Area: Mobile Menu Toggle + Search Bar */}
+      <div className="flex items-center gap-2 flex-1 max-w-xs sm:max-w-sm md:max-w-md">
+        {/* Mobile Hamburger Toggle */}
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          aria-label="Open mobile navigation menu"
+          className="lg:hidden p-1.5 -ml-1 rounded-md text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer shrink-0"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
-        {/* Live Search Quick-Jump Dropdown */}
-        {isSearchFocused && searchQuery.length > 0 && (
-          <div className="absolute left-0 top-11 w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-2 z-50 animate-in fade-in-50 zoom-in-95 duration-100">
-            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-zinc-900">
-              Matching Projects ({filteredSearchProjects.length})
+        {/* Search Input with Dynamic Results Dropdown */}
+        <div className="relative flex-1" ref={searchContainerRef}>
+          <div className="relative w-full">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Search projects, clients, BOQs..."
+              value={searchQuery}
+              onFocus={() => setIsSearchFocused(true)}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md pl-8 sm:pl-9 pr-8 sm:pr-14 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100 transition"
+            />
+            <div className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 items-center gap-0.5 text-[10px] text-zinc-400 font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 pointer-events-none">
+              <Command className="w-2.5 h-2.5" />
+              <span>K</span>
             </div>
+          </div>
+
+          {/* Live Search Quick-Jump Dropdown */}
+          {isSearchFocused && searchQuery.length > 0 && (
+            <div className="absolute left-0 top-11 w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-2 z-50 animate-in fade-in-50 zoom-in-95 duration-100">
+              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-zinc-900">
+                Matching Projects ({filteredSearchProjects.length})
+              </div>
             <div className="max-h-60 overflow-y-auto py-1">
               {filteredSearchProjects.length === 0 ? (
                 <div className="p-4 text-center text-xs text-zinc-400">
@@ -198,6 +224,7 @@ export function TopNav({ onOpenNewProject }: TopNavProps) {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Right Controls Area: Actions, Notifications, & User Profile Dropdown */}
@@ -205,7 +232,7 @@ export function TopNav({ onOpenNewProject }: TopNavProps) {
         {/* Primary Action Button: New Project */}
         <button
           onClick={onOpenNewProject}
-          className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs"
+          className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">New Project</span>
@@ -216,7 +243,7 @@ export function TopNav({ onOpenNewProject }: TopNavProps) {
           onClick={toggleTheme}
           aria-label="Toggle theme"
           title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          className="p-2 rounded-md text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition"
+          className="p-1.5 sm:p-2 rounded-md text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition"
         >
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
@@ -227,7 +254,7 @@ export function TopNav({ onOpenNewProject }: TopNavProps) {
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             aria-label="Notifications"
             title="Studio Notifications"
-            className="relative p-2 rounded-md text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition"
+            className="relative p-1.5 sm:p-2 rounded-md text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
@@ -237,7 +264,7 @@ export function TopNav({ onOpenNewProject }: TopNavProps) {
 
           {/* Notifications Drawer */}
           {isNotifOpen && (
-            <div className="absolute right-0 top-10 w-80 sm:w-96 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 animate-in fade-in-50 zoom-in-95 duration-100 overflow-hidden">
+            <div className="fixed sm:absolute right-2 sm:right-0 top-14 sm:top-10 w-[calc(100vw-1rem)] max-w-sm sm:w-96 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 animate-in fade-in-50 zoom-in-95 duration-100 overflow-hidden">
               <div className="p-3 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">

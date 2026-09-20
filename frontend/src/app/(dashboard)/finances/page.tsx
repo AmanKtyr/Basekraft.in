@@ -63,7 +63,8 @@ export default function FinancesPage() {
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
           <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Client Milestone Collections</h3>
         </div>
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[620px]">
           <thead>
             <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 text-zinc-400 font-mono text-[11px]">
               <th className="py-3 px-4">Project</th>
@@ -101,6 +102,7 @@ export default function FinancesPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

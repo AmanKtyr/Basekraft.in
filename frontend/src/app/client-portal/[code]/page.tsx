@@ -41,7 +41,7 @@ export default function ClientPortalPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       {/* Client Header */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-20 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-20 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs tracking-wider">
             IH
@@ -69,7 +69,7 @@ export default function ClientPortalPage() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-5xl mx-auto p-6 space-y-8">
+      <main className="max-w-5xl mx-auto p-3.5 sm:p-6 space-y-6 sm:space-y-8">
         {/* Progress Card */}
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -119,7 +119,7 @@ export default function ClientPortalPage() {
                   </p>
                 </div>
               </div>
-              <div className="p-4 flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800">
+              <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-zinc-200 dark:border-zinc-800">
                 <div>
                   <h4 className="text-xs font-semibold">Veneer Finish Sample #V-42</h4>
                   <p className="text-[11px] text-zinc-500">Uploaded by Ananya Deshmukh</p>
@@ -148,7 +148,7 @@ export default function ClientPortalPage() {
                   </p>
                 </div>
               </div>
-              <div className="p-4 flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800">
+              <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-zinc-200 dark:border-zinc-800">
                 <div>
                   <h4 className="text-xs font-semibold">Lighting Circuit Plan #E-102</h4>
                   <p className="text-[11px] text-zinc-500">Uploaded by Ar. Aman Katyar</p>

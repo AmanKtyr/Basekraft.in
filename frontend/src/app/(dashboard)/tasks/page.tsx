@@ -67,9 +67,9 @@ export function NewTaskModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-lg w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="px-5 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
               Add New Task or Snag
@@ -86,7 +86,7 @@ export function NewTaskModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
           <div className="space-y-1.5">
             <label className="font-medium text-zinc-700 dark:text-zinc-300">Task Title *</label>
             <input
@@ -384,20 +384,20 @@ export default function TasksPage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="relative flex-1 sm:flex-initial">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search tasks, client, project code..."
+              placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none w-64"
+              className="pl-9 pr-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none w-full sm:w-64"
             />
           </div>
           <button
             onClick={() => setIsTaskModalOpen(true)}
-            className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs cursor-pointer active:scale-98"
+            className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs cursor-pointer active:scale-98 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Task</span>
@@ -405,8 +405,9 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* 5-Column Drag & Drop Board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 items-start overflow-x-auto min-w-[950px]">
+      {/* 5-Column Drag & Drop Board with Mobile Touch Scroll Container */}
+      <div className="overflow-x-auto pb-4 -mx-3.5 px-3.5 sm:-mx-5 sm:px-5 md:mx-0 md:px-0">
+        <div className="grid grid-cols-5 gap-3 items-start min-w-[980px]">
         {columns.map((col) => {
           const colTasks = filteredTasks.filter((t) => t.status === col.id);
           const isHovered = activeDropCol === col.id;
@@ -593,6 +594,7 @@ export default function TasksPage() {
             </div>
           );
         })}
+        </div>
       </div>
 
       <NewTaskModal

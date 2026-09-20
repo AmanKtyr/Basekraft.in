@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { initialProjects } from "@/data/mockData";
 import { ProjectSector } from "@/types";
+import { QuotationLetterheadModal } from "@/components/quotes/QuotationLetterheadModal";
 
 export interface BOQLineItem {
   id: string;
@@ -295,10 +296,10 @@ export function NewQuoteModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150 overflow-y-auto">
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-4xl w-full shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg max-w-4xl w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <div className="px-5 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4 text-zinc-500" />
@@ -310,13 +311,13 @@ export function NewQuoteModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5 text-xs overflow-y-auto flex-1">
           {/* Top Project & Sector Selectors */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
@@ -548,6 +549,16 @@ export default function QuotesPage() {
   const [expandedQuoteId, setExpandedQuoteId] = useState<string | null>("q-1");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Letterhead Proposal Modal State
+  const [selectedQuoteForLetterhead, setSelectedQuoteForLetterhead] = useState<QuoteProposal | null>(null);
+  const [isLetterheadModalOpen, setIsLetterheadModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   const formatCurrency = (val: number) => {
     return `₹${val.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
@@ -555,10 +566,103 @@ export default function QuotesPage() {
   const handleAddQuote = (newQ: QuoteProposal) => {
     setQuotes((prev) => [newQ, ...prev]);
     setExpandedQuoteId(newQ.id);
+    showToast(`Quotation ${newQ.code} created successfully!`);
   };
 
   const toggleExpand = (id: string) => {
     setExpandedQuoteId(expandedQuoteId === id ? null : id);
+  };
+
+  const handleOpenLetterhead = (q: QuoteProposal) => {
+    setSelectedQuoteForLetterhead(q);
+    setIsLetterheadModalOpen(true);
+  };
+
+  const handleStatusChange = (quoteId: string, newStatus: "Approved" | "Client Review" | "Draft") => {
+    setQuotes((prev) =>
+      prev.map((q) => {
+        if (q.id === quoteId) {
+          return {
+            ...q,
+            status: newStatus,
+            approvedBy: newStatus === "Approved" ? "Ar. Aman Katyar" : "—",
+            lastUpdated: new Date().toLocaleString(),
+          };
+        }
+        return q;
+      })
+    );
+    showToast(`Quotation status updated to "${newStatus}"`);
+  };
+
+  const handleDuplicateQuote = (quote: QuoteProposal) => {
+    const versionMatch = quote.code.match(/-V(\d+)$/i);
+    const nextVersion = versionMatch ? `V${parseInt(versionMatch[1], 10) + 1}` : "V2";
+    const baseCode = quote.code.replace(/-V\d+$/i, "");
+    const newCode = `${baseCode}-${nextVersion}`;
+    const newQuote: QuoteProposal = {
+      ...quote,
+      id: `q-${Date.now()}`,
+      code: newCode,
+      status: "Draft",
+      createdDate: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+      lastUpdated: new Date().toLocaleString(),
+      approvedBy: "—",
+    };
+    setQuotes((prev) => [newQuote, ...prev]);
+    setExpandedQuoteId(newQuote.id);
+    showToast(`Revision duplicated: ${newCode}`);
+  };
+
+  const handleDeleteQuote = (quoteId: string, quoteCode: string) => {
+    if (typeof window !== "undefined" && window.confirm(`Permanently remove quote proposal "${quoteCode}"?`)) {
+      setQuotes((prev) => prev.filter((q) => q.id !== quoteId));
+      if (expandedQuoteId === quoteId) setExpandedQuoteId(null);
+      showToast(`Quote ${quoteCode} deleted.`);
+    }
+  };
+
+  const handleShareWhatsApp = (q: QuoteProposal) => {
+    const totalFormatted = formatCurrency(q.total);
+    const text = encodeURIComponent(
+      `*Official Quotation Proposal — Basekraft Architectural Studio*\n\n` +
+      `*Quote Ref:* ${q.code}\n` +
+      `*Project:* ${q.projectName} (${q.projectCode})\n` +
+      `*Client:* ${q.clientName}\n` +
+      `*Total Value:* ${totalFormatted} (Incl. GST)\n` +
+      `*Scope:* ${q.items.length} itemized BOQ specifications\n\n` +
+      `View your official PDF proposal here:\n` +
+      `http://localhost:3000/quotes`
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
+
+  const handleCopyProposalSummary = (q: QuoteProposal) => {
+    const summary = `Quotation ${q.code} | Project: ${q.projectName} (${q.projectCode}) | Client: ${q.clientName} | Amount: ${formatCurrency(q.total)}`;
+    navigator.clipboard.writeText(summary);
+    showToast("Proposal summary copied to clipboard!");
+  };
+
+  const handleExportQuotesCSV = () => {
+    const headers = ["Quote Code", "Project", "Client", "Sector", "Status", "Created Date", "Total (INR)"];
+    const rows = filteredQuotes.map((q) => [
+      q.code,
+      `"${q.projectName}"`,
+      `"${q.clientName}"`,
+      `"${q.sector}"`,
+      q.status,
+      q.createdDate,
+      q.total.toFixed(2),
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Basekraft_Quotes_Summary_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Quotes exported to CSV file.");
   };
 
   const filteredQuotes = useMemo(() => {
@@ -583,6 +687,14 @@ export default function QuotesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium flex items-center gap-2 border border-zinc-800 dark:border-zinc-200 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Top Header & Action Row (Matching ProjectStudio reference) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
         <div>
@@ -633,7 +745,7 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      {/* Top 3 KPI Summary Cards (Exact match with ProjectStudio dashboard/boqs) */}
+      {/* Top 3 KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 shadow-xs">
           <span className="text-xs text-zinc-500 font-medium">Approved Quotes Total</span>
@@ -667,15 +779,15 @@ export default function QuotesPage() {
           return (
             <div
               key={q.id}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xs overflow-hidden transition"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xs overflow-hidden transition hover:border-zinc-300 dark:hover:border-zinc-700"
             >
               {/* Card Header Top Row */}
               <div
                 onClick={() => toggleExpand(q.id)}
                 className="p-4 cursor-pointer hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition space-y-3"
               >
-                {/* Top Code & Tags */}
-                <div className="flex items-center justify-between">
+                {/* Top Code, Tags, & Quick Actions */}
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center flex-wrap gap-2">
                     <span className="text-xs font-mono font-bold text-zinc-500 dark:text-zinc-400">
                       {q.code}
@@ -684,24 +796,35 @@ export default function QuotesPage() {
                       Quote
                     </span>
 
-                    {/* Project & Client Pill (with briefcase) */}
+                    {/* Project & Client Pill */}
                     <div className="flex items-center gap-1 px-2.5 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium border border-blue-500/20">
                       <Briefcase className="w-3 h-3" />
                       <span>{q.clientName} ({q.projectName})</span>
                     </div>
 
-                    {/* Status Badge */}
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase ${
-                        q.status === "Approved"
-                          ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                          : q.status === "Client Review"
-                          ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700"
-                      }`}
+                    {/* Interactive Status Selector Dropdown */}
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="relative inline-block"
                     >
-                      {q.status}
-                    </span>
+                      <select
+                        value={q.status}
+                        onChange={(e) => handleStatusChange(q.id, e.target.value as any)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase cursor-pointer border outline-none appearance-none pr-4 ${
+                          q.status === "Approved"
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:bg-emerald-950/40"
+                            : q.status === "Client Review"
+                            ? "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-950/40"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700"
+                        }`}
+                        title="Click to update quote status"
+                      >
+                        <option value="Draft">Draft</option>
+                        <option value="Client Review">Client Review</option>
+                        <option value="Approved">Approved</option>
+                      </select>
+                      <ChevronDown className="w-2.5 h-2.5 absolute right-1 top-1.5 pointer-events-none text-zinc-500" />
+                    </div>
 
                     {/* Items count badge */}
                     <span className="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-medium">
@@ -709,9 +832,38 @@ export default function QuotesPage() {
                     </span>
                   </div>
 
-                  {/* Expand Chevron */}
-                  <div className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {/* Header Right Quick Action Buttons */}
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1.5"
+                  >
+                    {/* Duplicate / Clone Quote */}
+                    <button
+                      type="button"
+                      onClick={() => handleDuplicateQuote(q)}
+                      className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition cursor-pointer"
+                      title="Duplicate Quote (Create Revision)"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Delete Quote */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteQuote(q.id, q.code)}
+                      className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-950/50 text-zinc-400 hover:text-red-600 transition cursor-pointer"
+                      title="Delete Quote"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Expand Chevron */}
+                    <div
+                      onClick={() => toggleExpand(q.id)}
+                      className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 pl-1"
+                    >
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
                   </div>
                 </div>
 
@@ -741,31 +893,35 @@ export default function QuotesPage() {
               {/* Accordion Expanded Line Items */}
               {isExpanded && (
                 <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 p-4 space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                       <Layers className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Itemized BOQ Bill of Quantities</span>
+                      <span>Itemized BOQ Bill of Quantities ({q.items.length} specifications)</span>
                     </h4>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center flex-wrap gap-2">
+                      {/* Export PDF Proposal Button - Opens Letterhead Modal */}
                       <button
-                        onClick={() => alert(`Exporting official PDF Proposal for ${q.code}...`)}
-                        className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 transition shadow-xs"
+                        type="button"
+                        onClick={() => handleOpenLetterhead(q)}
+                        className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 rounded transition shadow-xs cursor-pointer active:scale-98"
                       >
-                        <Download className="w-3 h-3 text-zinc-500" />
+                        <Download className="w-3 h-3" />
                         <span>Export PDF Proposal</span>
                       </button>
+
+                      {/* Link to Full Project BOQ Editor */}
                       <Link
                         href={`/projects/${q.projectCode}?tab=boq`}
-                        className="text-[11px] font-medium px-2.5 py-1 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded hover:opacity-90 transition shadow-xs"
+                        className="text-[11px] font-medium px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition shadow-xs"
                       >
-                        Open Full BOQ Editor
+                        Open BOQ Matrix
                       </Link>
                     </div>
                   </div>
 
                   {/* Line Items Table */}
                   <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900">
-                    <table className="w-full text-xs text-left">
+                    <table className="w-full text-xs text-left min-w-[680px]">
                       <thead className="bg-zinc-100 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[11px]">
                         <tr>
                           <th className="p-2.5">Room / Zone</th>
@@ -779,7 +935,7 @@ export default function QuotesPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono">
-                        {q.items.map((item, idx) => {
+                        {q.items.map((item) => {
                           const itemTotal = item.qty * item.unitRate;
                           const itemGst = itemTotal * (item.gstPercent / 100);
                           return (
@@ -808,17 +964,27 @@ export default function QuotesPage() {
                   </div>
 
                   {/* Quick Card Action Footer */}
-                  <div className="flex items-center justify-between text-[11px] pt-1 text-zinc-500">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] pt-1 text-zinc-500 gap-2">
                     <div className="flex items-center gap-3">
                       <span>Sector: <strong className="text-zinc-800 dark:text-zinc-200">{q.sector}</strong></span>
                       <span>Target Margin: <strong className="text-emerald-600">20.5%</strong></span>
+                      <span>Items: <strong className="text-zinc-800 dark:text-zinc-200">{q.items.length}</strong></span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <button
-                        onClick={() => alert(`Sharing proposal link on client WhatsApp: ${q.clientName}`)}
-                        className="hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleCopyProposalSummary(q)}
+                        className="hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1 cursor-pointer"
                       >
-                        <Share2 className="w-3 h-3" /> Share with Client
+                        <Copy className="w-3 h-3" /> Copy Summary
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleShareWhatsApp(q)}
+                        className="hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1 cursor-pointer font-medium"
+                      >
+                        <Share2 className="w-3 h-3" /> Share with Client (WhatsApp)
                       </button>
                     </div>
                   </div>
@@ -833,6 +999,13 @@ export default function QuotesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddQuote={handleAddQuote}
+      />
+
+      {/* Official Architectural Letterhead Proposal Modal */}
+      <QuotationLetterheadModal
+        quote={selectedQuoteForLetterhead}
+        isOpen={isLetterheadModalOpen}
+        onClose={() => setIsLetterheadModalOpen(false)}
       />
     </div>
   );

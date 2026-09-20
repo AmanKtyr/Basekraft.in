@@ -17,6 +17,7 @@ import {
   Sparkles,
   ExternalLink,
   Package,
+  X,
 } from "lucide-react";
 import { themeConfig } from "@/config/theme";
 
@@ -109,14 +110,25 @@ const navSections: NavSection[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col h-screen select-none shrink-0">
+    <aside
+      className={
+        isMobile
+          ? "w-full h-full flex flex-col bg-white dark:bg-zinc-950 select-none"
+          : "w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col h-screen select-none shrink-0"
+      }
+    >
       {/* Workspace Brand Header */}
       <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" onClick={onClose} className="flex items-center gap-2.5">
           <div className="w-7 h-7 bg-zinc-950 dark:bg-zinc-100 rounded flex items-center justify-center text-white dark:text-zinc-950 font-bold text-xs tracking-wider">
             BK
           </div>
@@ -129,9 +141,19 @@ export function Sidebar() {
             </span>
           </div>
         </Link>
-        <span className="text-[10px] uppercase font-mono tracking-widest px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-          PRO
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] uppercase font-mono tracking-widest px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+            PRO
+          </span>
+          {isMobile && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Direct Navigation - Clean & 100% Clickable */}
@@ -153,6 +175,7 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onClose}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-medium transition-colors ${
                       isActive
                         ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-xs"
@@ -193,6 +216,7 @@ export function Sidebar() {
       <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
         <Link
           href="/client-portal/P-619"
+          onClick={onClose}
           className="flex items-center justify-between p-2 rounded-md bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-800 text-xs transition"
         >
           <div className="flex items-center gap-2">
