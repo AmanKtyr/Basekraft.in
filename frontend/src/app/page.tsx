@@ -39,7 +39,7 @@ export default function RootWebsiteHomePage() {
         {/* ========================================================= */}
         {/* 1. HERO SECTION WITH EXACT HELIONIX CONCENTRIC ORBS & BLURS */}
         {/* ========================================================= */}
-        <section id="home" className="relative overflow-hidden z-10 pt-32 sm:pt-40 xl:pt-48 pb-16 w-full isolate">
+        <section id="home" className="relative overflow-hidden z-10 pt-24 sm:pt-28 pb-16 w-full isolate">
           {/* Hero Background Shapes from Helyonex */}
           <div className="max-w-7xl mx-auto">
             <div className="absolute -z-10 pointer-events-none inset-0 overflow-hidden -mx-28">
