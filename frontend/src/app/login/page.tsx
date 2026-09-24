@@ -31,11 +31,12 @@ export default function LoginPage() {
   const { resolvedTheme, toggleTheme } = useTheme();
 
   const [email, setEmail] = useState("admin@basekraft.in");
-  const [password, setPassword] = useState("••••••••••••");
+  const [password, setPassword] = useState("StudioAdmin@123");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("studio_admin");
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const roleOptions: {
     role: UserRole;
@@ -44,15 +45,27 @@ export default function LoginPage() {
     icon: React.ComponentType<{ className?: string }>;
     badge: string;
     email: string;
+    defaultPassword: string;
     targetRoute: string;
   }[] = [
+    {
+      role: "superadmin",
+      title: "Global Superadmin",
+      description: "Platform command center: Manage SaaS tenants, assign plans, provision company admins",
+      icon: ShieldCheck,
+      badge: "Superadmin",
+      email: "superadmin@basekraft.in",
+      defaultPassword: "SuperAdmin@123",
+      targetRoute: "/superadmin",
+    },
     {
       role: "studio_admin",
       title: "Studio Admin / Principal",
       description: "Full studio practice OS: Turnkey projects, dynamic BOQ matrix, CRM & financials",
       icon: Briefcase,
       badge: "Studio Owner",
-      email: DEMO_PROFILES.studio_admin.email,
+      email: "admin@basekraft.in",
+      defaultPassword: "StudioAdmin@123",
       targetRoute: "/dashboard",
     },
     {
@@ -61,7 +74,8 @@ export default function LoginPage() {
       description: "CAD drawings, site checkpoint snags, task checklists & billable timesheets",
       icon: HardHat,
       badge: "Field Ops",
-      email: DEMO_PROFILES.architect.email,
+      email: "riya.kapoor@basekraft.in",
+      defaultPassword: "Architect@123",
       targetRoute: "/dashboard",
     },
     {
@@ -70,34 +84,45 @@ export default function LoginPage() {
       description: "Material purchase orders, dispatch status, invoices & payment disbursements",
       icon: Building2,
       badge: "Supplier",
-      email: DEMO_PROFILES.contractor.email,
+      email: "vikram.mep@apexbuild.com",
+      defaultPassword: "Contractor@123",
       targetRoute: "/orders",
     },
   ];
 
-
-  const handleManualLogin = (e: React.FormEvent) => {
+  const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      login(email, selectedRole);
+    setErrorMessage("");
+    try {
+      await login(email, password, selectedRole);
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
       setIsLoading(false);
-    }, 450);
+    }
   };
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
-    const profile = DEMO_PROFILES[role];
-    setEmail(profile.email);
-    setPassword("••••••••••••");
+    const opt = roleOptions.find((o) => o.role === role);
+    if (opt) {
+      setEmail(opt.email);
+      setPassword(opt.defaultPassword);
+    }
   };
 
   const handleOneClickLogin = (role: UserRole) => {
     setIsLoading(true);
+    const opt = roleOptions.find((o) => o.role === role);
     setTimeout(() => {
-      quickLogin(role);
+      if (opt) {
+        login(opt.email, opt.defaultPassword, role);
+      } else {
+        quickLogin(role);
+      }
       setIsLoading(false);
-    }, 350);
+    }, 250);
   };
 
   return (
@@ -222,7 +247,7 @@ export default function LoginPage() {
                   <span className="font-mono text-[10px] text-emerald-500 font-normal">Ready to test</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {roleOptions.map((opt) => {
                     const Icon = opt.icon;
                     const isSelected = selectedRole === opt.role;
@@ -255,6 +280,13 @@ export default function LoginPage() {
                 </div>
               </div>
 
+
+              {errorMessage && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
 
               {/* The Login Form */}
               <form onSubmit={handleManualLogin} className="space-y-4 pt-1">

@@ -2,8 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { authApi, clearAuthTokens, setAuthTokens } from "@/utils/api";
 
 export type UserRole =
+  | "superadmin"
   | "studio_admin"
   | "architect"
   | "contractor";
@@ -21,35 +23,44 @@ export interface UserProfile {
 }
 
 export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
+  superadmin: {
+    id: "usr_superadmin",
+    name: "Platform Superadmin",
+    email: "superadmin@basekraft.in",
+    role: "superadmin",
+    roleTitle: "Global Enterprise Orchestrator",
+    studioName: "Basekraft Platform HQ",
+    avatar: "PS",
+  },
   studio_admin: {
     id: "usr_studio_admin",
-    name: "Aman Tyagi",
+    name: "Aman Sharma",
     email: "admin@basekraft.in",
     role: "studio_admin",
     roleTitle: "Principal Architect & Founder",
     studioName: "Basekraft Studio Gurugram",
-    avatar: "AT",
+    avatar: "AS",
     tenantId: "tenant_bk_01",
   },
   architect: {
     id: "usr_architect",
-    name: "Rohan Sharma",
-    email: "architect@basekraft.in",
+    name: "Riya Kapoor",
+    email: "riya.kapoor@basekraft.in",
     role: "architect",
-    roleTitle: "Senior Project Architect",
+    roleTitle: "Senior BIM & Spatial Lead",
     studioName: "Basekraft Studio Gurugram",
-    avatar: "RS",
+    avatar: "RK",
     tenantId: "tenant_bk_01",
     assignedProjectCode: "P-101",
   },
   contractor: {
     id: "usr_contractor",
-    name: "Durian Woodworks Team",
-    email: "vendor@durianwoods.com",
+    name: "Vikram Oberoi",
+    email: "vikram.mep@apexbuild.com",
     role: "contractor",
-    roleTitle: "Millwork & Veneer Contractor",
-    studioName: "Durian Fabrication Labs",
-    avatar: "DW",
+    roleTitle: "Turnkey MEP & HVAC Director",
+    studioName: "Apex MEP Turnkey Labs",
+    avatar: "VO",
     tenantId: "tenant_bk_01",
   },
 };
@@ -58,7 +69,7 @@ interface AuthContextType {
   user: UserProfile;
   role: UserRole;
   isAuthenticated: boolean;
-  login: (email: string, role?: UserRole) => void;
+  login: (email: string, password?: string, role?: UserRole) => Promise<boolean>;
   quickLogin: (role: UserRole) => void;
   logout: () => void;
   switchRole: (role: UserRole) => void;
@@ -68,7 +79,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  // Safe default on server/client hydration
   const [user, setUser] = useState<UserProfile>(DEMO_PROFILES.studio_admin);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -96,7 +106,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = (email: string, targetRole?: UserRole) => {
+  const mapBackendRole = (role: string): UserRole => {
+    switch (role?.toUpperCase()) {
+      case "SUPERADMIN":
+        return "superadmin";
+      case "COMPANY_ADMIN":
+        return "studio_admin";
+      case "ARCHITECT":
+        return "architect";
+      case "CONTRACTOR":
+        return "contractor";
+      default:
+        return "studio_admin";
+    }
+  };
+
+  const navigateByRole = (role: UserRole) => {
+    if (role === "superadmin") {
+      router.push("/superadmin");
+    } else if (role === "contractor") {
+      router.push("/orders");
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
+  const login = async (email: string, password?: string, targetRole?: UserRole): Promise<boolean> => {
+    // 1. Try real DRF backend authentication first if password is provided
+    if (password && password !== "••••••••••••") {
+      try {
+        const res = await authApi.login(email, password);
+        const mappedRole = mapBackendRole(res.user.role);
+        const userProfile: UserProfile = {
+          id: res.user.id,
+          name: res.user.full_name || res.user.email,
+          email: res.user.email,
+          role: mappedRole,
+          roleTitle: res.user.role_title || "Studio Member",
+          studioName: res.user.company_details?.name || "Basekraft Studio",
+          avatar: res.user.avatar_initials || "BK",
+          tenantId: res.user.company || undefined,
+        };
+
+        persistUser(userProfile);
+        navigateByRole(mappedRole);
+        return true;
+      } catch (err: unknown) {
+        console.warn("Backend auth failed, evaluating demo match:", err);
+      }
+    }
+
+    // 2. Demo fallback
     const matchedRole =
       targetRole ||
       (Object.keys(DEMO_PROFILES).find(
@@ -106,37 +166,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const profile = DEMO_PROFILES[matchedRole];
     persistUser(profile);
-
-    if (matchedRole === "contractor") {
-      router.push("/orders");
-    } else {
-      router.push("/dashboard");
-    }
+    navigateByRole(matchedRole);
+    return true;
   };
 
   const quickLogin = (role: UserRole) => {
     const profile = DEMO_PROFILES[role];
     persistUser(profile);
-
-    if (role === "contractor") {
-      router.push("/orders");
-    } else {
-      router.push("/dashboard");
-    }
+    navigateByRole(role);
   };
-
 
   const switchRole = (newRole: UserRole) => {
     const profile = DEMO_PROFILES[newRole];
     persistUser(profile);
+    navigateByRole(newRole);
   };
 
   const logout = () => {
-    try {
-      localStorage.removeItem("basekraft_auth_user");
-    } catch {
-      // ignore
-    }
+    clearAuthTokens();
     setUser(DEMO_PROFILES.studio_admin);
     router.push("/login");
   };

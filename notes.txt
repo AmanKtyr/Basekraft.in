@@ -1,0 +1,1 @@
+ @{ email = 'superadmin@basekraft.in'; password = 'SuperAdmin@123' }
