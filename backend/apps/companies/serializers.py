@@ -16,6 +16,7 @@ class CompanySerializer(serializers.ModelSerializer):
         allow_null=True
     )
     members_count = serializers.IntegerField(source='members.count', read_only=True)
+    industry_display = serializers.CharField(source='get_industry_display', read_only=True)
 
     class Meta:
         model = Company
@@ -23,6 +24,8 @@ class CompanySerializer(serializers.ModelSerializer):
             'id',
             'name',
             'slug',
+            'industry',
+            'industry_display',
             'city',
             'country',
             'address',
@@ -37,7 +40,7 @@ class CompanySerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'members_count', 'storage_used_gb']
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'members_count', 'storage_used_gb', 'industry_display']
 
 
 class CompanyCreateWithAdminSerializer(serializers.ModelSerializer):
@@ -57,12 +60,16 @@ class CompanyCreateWithAdminSerializer(serializers.ModelSerializer):
 
     created_admin = serializers.SerializerMethodField(read_only=True)
 
+    industry_display = serializers.CharField(source='get_industry_display', read_only=True)
+
     class Meta:
         model = Company
         fields = [
             'id',
             'name',
             'slug',
+            'industry',
+            'industry_display',
             'city',
             'country',
             'address',
@@ -79,7 +86,7 @@ class CompanyCreateWithAdminSerializer(serializers.ModelSerializer):
             'created_admin',
             'created_at',
         ]
-        read_only_fields = ['id', 'slug', 'created_at', 'created_admin']
+        read_only_fields = ['id', 'slug', 'created_at', 'created_admin', 'industry_display']
 
     def validate_admin_email(self, value):
         if User.objects.filter(email__iexact=value).exists():

@@ -92,7 +92,7 @@ export default function SuperAdminDashboard() {
             className="px-3.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-xs flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Studio Tenant</span>
+            <span>Add Company Tenant</span>
           </Link>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function SuperAdminDashboard() {
         {/* Card 1: Total Companies */}
         <div className="p-5 rounded-xl border border-border bg-card text-card-foreground shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Total Studios</span>
+            <span className="text-xs font-medium text-muted-foreground">Total Companies</span>
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <Building2 className="w-4 h-4" />
             </div>
@@ -127,7 +127,7 @@ export default function SuperAdminDashboard() {
           <div className="mt-3">
             <div className="text-2xl font-bold tracking-tight">{metrics.total_platform_users}</div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Architects, Admins & Contractors
+              Directors, Engineers & Vendors
             </p>
           </div>
         </div>
@@ -146,7 +146,7 @@ export default function SuperAdminDashboard() {
               <span className="text-sm font-normal text-muted-foreground font-mono">GB</span>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Drawings, CAD vaults & BIM assets
+              GFC drawings, SLD diagrams & CAD files
             </p>
           </div>
         </div>
@@ -175,10 +175,10 @@ export default function SuperAdminDashboard() {
           <div className="p-5 border-b border-border flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-foreground">
-                Registered Studio Tenants
+                Registered Company Tenants
               </h2>
               <p className="text-xs text-muted-foreground">
-                Multi-tenant architectural studios configured in Basekraft OS
+                Multi-sector enterprise organizations active in Basekraft OS
               </p>
             </div>
             <Link
@@ -194,7 +194,8 @@ export default function SuperAdminDashboard() {
             <table className="w-full text-left text-xs">
               <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider font-mono border-b border-border">
                 <tr>
-                  <th className="px-5 py-3 font-semibold">Studio / Tenant</th>
+                  <th className="px-5 py-3 font-semibold">Company / Tenant</th>
+                  <th className="px-4 py-3 font-semibold">Business Sector</th>
                   <th className="px-4 py-3 font-semibold">Location</th>
                   <th className="px-4 py-3 font-semibold">Plan</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
@@ -204,7 +205,7 @@ export default function SuperAdminDashboard() {
               <tbody className="divide-y divide-border">
                 {companies.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-muted-foreground">
+                    <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">
                       No companies found or connecting to API...
                     </td>
                   </tr>
@@ -223,6 +224,11 @@ export default function SuperAdminDashboard() {
                             </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-foreground">
+                          {co.industry_display || (co.industry === "SOLAR_EPC" ? "Solar EPC" : co.industry === "MODULAR_FURNITURE" ? "Modular Factory" : co.industry === "CIVIL_CONSTRUCTION" ? "Civil Construction" : "Turnkey Fit-out")}
+                        </span>
                       </td>
                       <td className="px-4 py-3.5 text-muted-foreground">
                         {co.city}, {co.country}

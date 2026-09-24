@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authApi, clearAuthTokens, setAuthTokens } from "@/utils/api";
+import { authApi, clearAuthTokens, setAuthTokens, IndustryType } from "@/utils/api";
 
 export type UserRole =
   | "superadmin"
@@ -20,6 +20,8 @@ export interface UserProfile {
   avatar?: string;
   tenantId?: string;
   assignedProjectCode?: string;
+  industry?: IndustryType;
+  industryDisplay?: string;
 }
 
 export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
@@ -31,48 +33,58 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     roleTitle: "Global Enterprise Orchestrator",
     studioName: "Basekraft Platform HQ",
     avatar: "PS",
+    industry: "INTERIOR_DESIGN",
+    industryDisplay: "Multi-Tenant Enterprise",
   },
   studio_admin: {
     id: "usr_studio_admin",
     name: "Aman Sharma",
     email: "admin@basekraft.in",
     role: "studio_admin",
-    roleTitle: "Principal Architect & Founder",
-    studioName: "Basekraft Studio Gurugram",
+    roleTitle: "Managing Director & Principal",
+    studioName: "Basekraft Turnkey & Architecture",
     avatar: "AS",
     tenantId: "tenant_bk_01",
+    industry: "INTERIOR_DESIGN",
+    industryDisplay: "Interior Design & Turnkey Fit-out",
   },
   architect: {
     id: "usr_architect",
     name: "Riya Kapoor",
     email: "riya.kapoor@basekraft.in",
     role: "architect",
-    roleTitle: "Senior BIM & Spatial Lead",
-    studioName: "Basekraft Studio Gurugram",
+    roleTitle: "Senior Design & Project Lead",
+    studioName: "Basekraft Turnkey & Architecture",
     avatar: "RK",
     tenantId: "tenant_bk_01",
     assignedProjectCode: "P-101",
+    industry: "INTERIOR_DESIGN",
+    industryDisplay: "Interior Design & Turnkey Fit-out",
   },
   contractor: {
     id: "usr_contractor",
     name: "Vikram Oberoi",
     email: "vikram.mep@apexbuild.com",
     role: "contractor",
-    roleTitle: "Turnkey MEP & HVAC Director",
+    roleTitle: "Turnkey MEP & Fit-out Director",
     studioName: "Apex MEP Turnkey Labs",
     avatar: "VO",
     tenantId: "tenant_bk_01",
+    industry: "INTERIOR_DESIGN",
+    industryDisplay: "Interior Design & Turnkey Fit-out",
   },
 };
 
 interface AuthContextType {
   user: UserProfile;
   role: UserRole;
+  industry: IndustryType;
   isAuthenticated: boolean;
   login: (email: string, password?: string, role?: UserRole) => Promise<boolean>;
   quickLogin: (role: UserRole) => void;
   logout: () => void;
   switchRole: (role: UserRole) => void;
+  setIndustry: (industry: IndustryType) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -142,10 +154,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: res.user.full_name || res.user.email,
           email: res.user.email,
           role: mappedRole,
-          roleTitle: res.user.role_title || "Studio Member",
-          studioName: res.user.company_details?.name || "Basekraft Studio",
+          roleTitle: res.user.role_title || "Company Member",
+          studioName: res.user.company_details?.name || "Basekraft Enterprise",
           avatar: res.user.avatar_initials || "BK",
           tenantId: res.user.company || undefined,
+          industry: (res.user.company_details?.industry as IndustryType) || "INTERIOR_DESIGN",
+          industryDisplay: res.user.company_details?.industry_display || "Interior Design & Turnkey Fit-out",
         };
 
         persistUser(userProfile);
@@ -182,6 +196,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigateByRole(newRole);
   };
 
+  const setIndustry = (newIndustry: IndustryType) => {
+    const industryLabels: Record<IndustryType, string> = {
+      INTERIOR_DESIGN: "Interior Design & Turnkey Fit-out",
+      SOLAR_EPC: "Solar Energy & Rooftop EPC",
+      MODULAR_FURNITURE: "Modular Furniture & Manufacturing",
+      CIVIL_CONSTRUCTION: "Real Estate & Civil Construction",
+    };
+    const updated = {
+      ...user,
+      industry: newIndustry,
+      industryDisplay: industryLabels[newIndustry],
+    };
+    persistUser(updated);
+  };
+
   const logout = () => {
     clearAuthTokens();
     setUser(DEMO_PROFILES.studio_admin);
@@ -193,11 +222,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         role: user.role,
+        industry: user.industry || "INTERIOR_DESIGN",
         isAuthenticated: true,
         login,
         quickLogin,
         logout,
         switchRole,
+        setIndustry,
       }}
     >
       {children}

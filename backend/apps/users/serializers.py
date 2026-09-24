@@ -7,9 +7,11 @@ User = get_user_model()
 
 
 class UserCompanySummarySerializer(serializers.ModelSerializer):
+    industry_display = serializers.CharField(source='get_industry_display', read_only=True)
+
     class Meta:
         model = Company
-        fields = ['id', 'name', 'slug', 'status', 'city', 'country']
+        fields = ['id', 'name', 'slug', 'status', 'city', 'country', 'industry', 'industry_display']
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -57,6 +59,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             token['company_id'] = str(user.company_id)
             token['company_name'] = user.company.name
             token['company_slug'] = user.company.slug
+            token['company_industry'] = user.company.industry
         else:
             token['company_id'] = None
         return token

@@ -178,7 +178,7 @@ export default function SuperAdminLayout({
           >
             <div className="flex items-center gap-3">
               <Layers className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
-              <span>Studio App Preview</span>
+              <span>Company Operations App</span>
             </div>
             <ExternalLink className="w-3 h-3 text-muted-foreground opacity-60" />
           </Link>

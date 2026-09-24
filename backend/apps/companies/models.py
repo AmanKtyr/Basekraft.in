@@ -10,8 +10,21 @@ class Company(BaseModel):
         ('SUSPENDED', 'Suspended'),
     ]
 
+    INDUSTRY_CHOICES = [
+        ('INTERIOR_DESIGN', 'Interior Design & Turnkey Fit-out'),
+        ('SOLAR_EPC', 'Solar Energy & Rooftop EPC'),
+        ('MODULAR_FURNITURE', 'Modular Furniture & Manufacturing'),
+        ('CIVIL_CONSTRUCTION', 'Real Estate & Civil Construction'),
+    ]
+
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
+    industry = models.CharField(
+        max_length=50,
+        choices=INDUSTRY_CHOICES,
+        default='INTERIOR_DESIGN',
+        db_index=True
+    )
     city = models.CharField(max_length=100, default='Gurugram')
     country = models.CharField(max_length=100, default='India')
     address = models.TextField(blank=True, default='')

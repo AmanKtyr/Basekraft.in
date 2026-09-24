@@ -22,6 +22,8 @@ import {
   Phone,
   AlertTriangle,
   Lock,
+  Layers,
+  Sparkles,
 } from "lucide-react";
 import {
   companiesApi,
@@ -29,6 +31,8 @@ import {
   CompanyItem,
   PlanItem,
   CompanyCreatePayload,
+  IndustryType,
+  INDUSTRY_OPTIONS,
 } from "@/utils/api";
 
 function CompaniesManagementContent() {
@@ -38,6 +42,7 @@ function CompaniesManagementContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedIndustry, setSelectedIndustry] = useState<string>("ALL");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Modal States
@@ -52,6 +57,7 @@ function CompaniesManagementContent() {
   // New Company Form State
   const [formData, setFormData] = useState<CompanyCreatePayload>({
     name: "",
+    industry: "INTERIOR_DESIGN",
     city: "Gurugram",
     country: "India",
     address: "",
@@ -64,7 +70,7 @@ function CompaniesManagementContent() {
     admin_last_name: "",
     admin_email: "",
     admin_password: "",
-    admin_role_title: "Principal Architect & Founder",
+    admin_role_title: "Managing Director / Principal",
   });
 
   const showToast = (msg: string) => {
@@ -120,11 +126,12 @@ function CompaniesManagementContent() {
 
     try {
       await companiesApi.create(formData);
-      showToast(`Company "${formData.name}" and admin account created successfully!`);
+      showToast(`Company "${formData.name}" and administrator account provisioned successfully!`);
       setIsAddModalOpen(false);
       // Reset form
       setFormData({
         name: "",
+        industry: "INTERIOR_DESIGN",
         city: "Gurugram",
         country: "India",
         address: "",
@@ -137,7 +144,7 @@ function CompaniesManagementContent() {
         admin_last_name: "",
         admin_email: "",
         admin_password: "",
-        admin_role_title: "Principal Architect & Founder",
+        admin_role_title: "Managing Director / Principal",
       });
       loadData();
     } catch (err: unknown) {
@@ -157,6 +164,7 @@ function CompaniesManagementContent() {
     try {
       await companiesApi.update(activeCompany.id, {
         name: activeCompany.name,
+        industry: activeCompany.industry,
         city: activeCompany.city,
         country: activeCompany.country,
         address: activeCompany.address,
@@ -194,6 +202,12 @@ function CompaniesManagementContent() {
     }
   };
 
+  // Filtered companies based on industry filter tab
+  const displayedCompanies = companies.filter((c) => {
+    if (selectedIndustry === "ALL") return true;
+    return c.industry === selectedIndustry;
+  });
+
   return (
     <div className="space-y-6">
       {/* Toast Alert */}
@@ -208,10 +222,10 @@ function CompaniesManagementContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Architectural Studio Tenants
+            Enterprise Company Tenants
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Provision, monitor, edit, and delete architectural practices and turnkey studios.
+            Provision, monitor, edit, and organize companies across Turnkey Interiors, Solar EPC, Modular Manufacturing, and Civil Construction.
           </p>
         </div>
 
@@ -223,8 +237,41 @@ function CompaniesManagementContent() {
           className="px-3.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-xs flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Provision New Studio</span>
+          <span>Provision New Company</span>
         </button>
+      </div>
+
+      {/* Industry Sector Filter Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-border/50 text-xs">
+        <span className="text-[11px] font-mono font-semibold uppercase text-muted-foreground shrink-0 mr-1">
+          Sector:
+        </span>
+        <button
+          onClick={() => setSelectedIndustry("ALL")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
+            selectedIndustry === "ALL"
+              ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+              : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+          }`}
+        >
+          All Sectors ({companies.length})
+        </button>
+        {INDUSTRY_OPTIONS.map((ind) => {
+          const count = companies.filter((c) => c.industry === ind.key).length;
+          return (
+            <button
+              key={ind.key}
+              onClick={() => setSelectedIndustry(ind.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
+                selectedIndustry === ind.key
+                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              {ind.badge} ({count})
+            </button>
+          );
+        })}
       </div>
 
       {/* Search & Status Filters */}
@@ -233,7 +280,7 @@ function CompaniesManagementContent() {
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by studio name or slug..."
+            placeholder="Search by company name or slug..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
@@ -247,11 +294,11 @@ function CompaniesManagementContent() {
               onClick={() => setSelectedStatus(st)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
                 selectedStatus === st
-                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                  ? "bg-foreground text-background font-semibold shadow-xs"
                   : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
-              {st === "ALL" ? "All Studios" : st}
+              {st === "ALL" ? "All Statuses" : st}
             </button>
           ))}
           <button
@@ -270,10 +317,11 @@ function CompaniesManagementContent() {
           <table className="w-full text-left text-xs">
             <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider font-mono border-b border-border">
               <tr>
-                <th className="px-5 py-3 font-semibold">Studio Practice</th>
+                <th className="px-5 py-3 font-semibold">Company / Enterprise</th>
+                <th className="px-4 py-3 font-semibold">Business Sector</th>
                 <th className="px-4 py-3 font-semibold">Location</th>
                 <th className="px-4 py-3 font-semibold">Subscription Plan</th>
-                <th className="px-4 py-3 font-semibold">Lead Architect</th>
+                <th className="px-4 py-3 font-semibold">Lead Director</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold">Storage</th>
                 <th className="px-5 py-3 font-semibold text-right">Actions</th>
@@ -282,21 +330,21 @@ function CompaniesManagementContent() {
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-5 py-12 text-center text-muted-foreground">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" />
-                    <span>Loading studio tenants from DRF database...</span>
+                    <span>Loading company tenants from DRF database...</span>
                   </td>
                 </tr>
-              ) : companies.length === 0 ? (
+              ) : displayedCompanies.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
-                    No studios found matching your query.
+                  <td colSpan={8} className="px-5 py-12 text-center text-muted-foreground">
+                    No companies found matching your query or selected sector.
                   </td>
                 </tr>
               ) : (
-                companies.map((co) => (
+                displayedCompanies.map((co) => (
                   <tr key={co.id} className="hover:bg-accent/30 transition">
-                    {/* Studio Name & Slug */}
+                    {/* Company Name & Slug */}
                     <td className="px-5 py-3.5 font-medium">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
@@ -305,10 +353,38 @@ function CompaniesManagementContent() {
                         <div className="min-w-0">
                           <p className="text-foreground font-semibold truncate">{co.name}</p>
                           <p className="text-[10px] text-muted-foreground font-mono truncate">
-                            slug: {co.slug}
+                            /{co.slug}
                           </p>
                         </div>
                       </div>
+                    </td>
+
+                    {/* Business Sector Badge */}
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                          co.industry === "SOLAR_EPC"
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                            : co.industry === "MODULAR_FURNITURE"
+                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
+                            : co.industry === "CIVIL_CONSTRUCTION"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            co.industry === "SOLAR_EPC"
+                              ? "bg-amber-500"
+                              : co.industry === "MODULAR_FURNITURE"
+                              ? "bg-purple-500"
+                              : co.industry === "CIVIL_CONSTRUCTION"
+                              ? "bg-blue-500"
+                              : "bg-emerald-500"
+                          }`}
+                        />
+                        {co.industry_display || (co.industry === "SOLAR_EPC" ? "Solar Energy EPC" : co.industry === "MODULAR_FURNITURE" ? "Modular Factory" : co.industry === "CIVIL_CONSTRUCTION" ? "Civil Construction" : "Turnkey Fit-out")}
+                      </span>
                     </td>
 
                     {/* Location */}
@@ -326,7 +402,7 @@ function CompaniesManagementContent() {
                       </span>
                     </td>
 
-                    {/* Lead Architect */}
+                    {/* Lead Director */}
                     <td className="px-4 py-3.5 text-foreground font-medium">
                       {co.lead_architect || "Not specified"}
                     </td>
@@ -369,7 +445,7 @@ function CompaniesManagementContent() {
                             setFormError(null);
                             setIsEditModalOpen(true);
                           }}
-                          title="Edit studio"
+                          title="Edit company"
                           className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -379,7 +455,7 @@ function CompaniesManagementContent() {
                             setActiveCompany(co);
                             setIsDeleteModalOpen(true);
                           }}
-                          title="Delete studio"
+                          title="Delete company"
                           className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -395,7 +471,7 @@ function CompaniesManagementContent() {
       </div>
 
       {/* ============================================================== */}
-      {/* MODAL 1: ADD STUDIO TENANT & INITIAL ADMIN PROVISIONING         */}
+      {/* MODAL 1: ADD COMPANY & INITIAL ADMIN PROVISIONING               */}
       {/* ============================================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -403,15 +479,15 @@ function CompaniesManagementContent() {
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-foreground">
-                  Provision New Studio Tenant
+                  Provision New Company Tenant
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Creates the organization and its primary administrator account atomically.
+                  Supports Turnkey Fit-out, Solar EPC, Modular Manufacturing, and Civil Construction.
                 </p>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -425,20 +501,43 @@ function CompaniesManagementContent() {
                 </div>
               )}
 
-              {/* Section 1: Organization Details */}
+              {/* Section 1: Business Sector & Industry */}
               <div className="space-y-3">
                 <div className="text-[11px] font-semibold text-primary uppercase tracking-wider font-mono">
-                  1. Organization Profile
+                  1. Organization & Industry Sector
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
+                    <Layers className="w-3.5 h-3.5 text-primary" />
+                    <span>Business Sector & Industry *</span>
+                  </label>
+                  <select
+                    value={formData.industry}
+                    onChange={(e) =>
+                      setFormData({ ...formData, industry: e.target.value as IndustryType })
+                    }
+                    className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                  >
+                    {INDUSTRY_OPTIONS.map((opt) => (
+                      <option key={opt.key} value={opt.key}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {INDUSTRY_OPTIONS.find((o) => o.key === formData.industry)?.description}
+                  </p>
                 </div>
 
                 <div>
                   <label className="text-xs font-medium text-foreground block mb-1">
-                    Studio Name *
+                    Company / Firm Name *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Studio Morphogenesis"
+                    placeholder="e.g. Apex Solar Energy Systems"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
@@ -507,11 +606,11 @@ function CompaniesManagementContent() {
 
                 <div>
                   <label className="text-xs font-medium text-foreground block mb-1">
-                    Lead Principal Architect
+                    Managing Director / Project Head
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Ar. Kabir Mehta"
+                    placeholder="e.g. Sameer Kapoor"
                     value={formData.lead_architect}
                     onChange={(e) => setFormData({ ...formData, lead_architect: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
@@ -523,7 +622,7 @@ function CompaniesManagementContent() {
               <div className="space-y-3 pt-3 border-t border-border">
                 <div className="text-[11px] font-semibold text-primary uppercase tracking-wider font-mono flex items-center justify-between">
                   <span>2. Initial Administrator Account</span>
-                  <span className="text-[10px] text-muted-foreground font-normal">Can log in immediately</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">Instant sign-in access</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -533,7 +632,7 @@ function CompaniesManagementContent() {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Kabir"
+                      placeholder="e.g. Sameer"
                       value={formData.admin_first_name}
                       onChange={(e) => setFormData({ ...formData, admin_first_name: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
@@ -545,7 +644,7 @@ function CompaniesManagementContent() {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Mehta"
+                      placeholder="e.g. Kapoor"
                       value={formData.admin_last_name}
                       onChange={(e) => setFormData({ ...formData, admin_last_name: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
@@ -560,7 +659,7 @@ function CompaniesManagementContent() {
                   <input
                     type="email"
                     required
-                    placeholder="kabir@morphogenesis.in"
+                    placeholder="sameer@apexsolar.in"
                     value={formData.admin_email}
                     onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
@@ -575,7 +674,7 @@ function CompaniesManagementContent() {
                     type="password"
                     required
                     minLength={8}
-                    placeholder="Create a strong temporary password"
+                    placeholder="Create temporary secure password"
                     value={formData.admin_password}
                     onChange={(e) => setFormData({ ...formData, admin_password: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
@@ -603,7 +702,7 @@ function CompaniesManagementContent() {
                       <span>Provisioning...</span>
                     </>
                   ) : (
-                    <span>Provision Studio Tenant</span>
+                    <span>Provision Company Tenant</span>
                   )}
                 </button>
               </div>
@@ -613,7 +712,7 @@ function CompaniesManagementContent() {
       )}
 
       {/* ============================================================== */}
-      {/* MODAL 2: EDIT STUDIO DETAILS                                   */}
+      {/* MODAL 2: EDIT COMPANY DETAILS                                  */}
       {/* ============================================================== */}
       {isEditModalOpen && activeCompany && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -621,15 +720,15 @@ function CompaniesManagementContent() {
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-foreground">
-                  Update Studio Details
+                  Update Company Profile
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Modify tenant status, plan tier, or studio contact points.
+                  Modify business sector, tier, status, or company leadership.
                 </p>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -645,7 +744,7 @@ function CompaniesManagementContent() {
 
               <div>
                 <label className="text-xs font-medium text-foreground block mb-1">
-                  Studio Name *
+                  Company Name *
                 </label>
                 <input
                   type="text"
@@ -654,6 +753,29 @@ function CompaniesManagementContent() {
                   onChange={(e) => setActiveCompany({ ...activeCompany, name: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
+                  <Layers className="w-3.5 h-3.5 text-primary" />
+                  <span>Business Sector & Industry *</span>
+                </label>
+                <select
+                  value={activeCompany.industry}
+                  onChange={(e) =>
+                    setActiveCompany({
+                      ...activeCompany,
+                      industry: e.target.value as IndustryType,
+                    })
+                  }
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                >
+                  {INDUSTRY_OPTIONS.map((opt) => (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -721,7 +843,7 @@ function CompaniesManagementContent() {
 
               <div>
                 <label className="text-xs font-medium text-foreground block mb-1">
-                  Lead Principal Architect
+                  Managing Director / Head
                 </label>
                 <input
                   type="text"
@@ -765,12 +887,12 @@ function CompaniesManagementContent() {
 
               <div className="text-center space-y-1">
                 <h3 className="text-base font-bold text-foreground">
-                  Delete Studio Tenant?
+                  Delete Company Tenant?
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   Are you sure you want to permanently delete{" "}
                   <strong className="text-foreground">{activeCompany.name}</strong>? All associated
-                  user accounts and tenant records will be purged. This action cannot be undone.
+                  user accounts, projects, and cloud files will be purged. This action cannot be undone.
                 </p>
               </div>
 
@@ -805,7 +927,7 @@ export default function SuperAdminCompaniesPage() {
       fallback={
         <div className="p-12 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
           <RefreshCw className="w-4 h-4 animate-spin text-primary" />
-          <span>Loading studio tenants...</span>
+          <span>Loading companies...</span>
         </div>
       }
     >
