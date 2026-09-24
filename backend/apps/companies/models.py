@@ -19,6 +19,7 @@ class Company(BaseModel):
 
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
+    org_code = models.CharField(max_length=50, unique=True, blank=True, null=True, db_index=True)
     industry = models.CharField(
         max_length=50,
         choices=INDUSTRY_CHOICES,
@@ -47,7 +48,7 @@ class Company(BaseModel):
         verbose_name_plural = 'Company Tenants'
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.org_code or self.slug})"
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -58,4 +59,13 @@ class Company(BaseModel):
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
+
+        if not self.org_code:
+            import random
+            clean_prefix = ''.join(c for c in self.name[:3].upper() if c.isalnum()) or 'ORG'
+            candidate = f"ORG-{clean_prefix}-{random.randint(1000, 9999)}"
+            while Company.objects.filter(org_code=candidate).exclude(pk=self.pk).exists():
+                candidate = f"ORG-{clean_prefix}-{random.randint(1000, 9999)}"
+            self.org_code = candidate
+
         super().save(*args, **kwargs)

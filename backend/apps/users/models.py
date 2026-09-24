@@ -35,14 +35,34 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         ('SUPERADMIN', 'Superadmin'),
         ('COMPANY_ADMIN', 'Company Admin / Principal'),
-        ('ARCHITECT', 'Project Architect'),
+        ('PROJECT_MANAGER', 'Project Manager'),
+        ('SITE_ENGINEER', 'Site Engineer'),
+        ('SALES_LEAD', 'Sales & CRM Lead'),
+        ('ARCHITECT', 'Project Architect / Designer'),
         ('CONTRACTOR', 'Contractor / Vendor'),
+    ]
+
+    DEPARTMENT_CHOICES = [
+        ('PROJECTS', 'Projects & Execution'),
+        ('SALES_CRM', 'Sales & CRM'),
+        ('DESIGN', 'Design & Architecture'),
+        ('ENGINEERING', 'Site & Technical Engineering'),
+        ('FINANCE', 'Finance & Billing'),
+        ('PROCUREMENT', 'Procurement & Vendors'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True, db_index=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='ARCHITECT', db_index=True)
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default='ARCHITECT', db_index=True)
     role_title = models.CharField(max_length=100, blank=True, default='')
+    department = models.CharField(max_length=50, choices=DEPARTMENT_CHOICES, default='PROJECTS', db_index=True)
+    
+    # Granular Employee Access Permissions
+    can_manage_leads = models.BooleanField(default=True)
+    can_manage_projects = models.BooleanField(default=True)
+    can_view_finances = models.BooleanField(default=False)
+    can_approve_orders = models.BooleanField(default=False)
+
     company = models.ForeignKey(
         'companies.Company',
         on_delete=models.CASCADE,

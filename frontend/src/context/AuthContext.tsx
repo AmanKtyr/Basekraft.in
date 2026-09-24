@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authApi, clearAuthTokens, setAuthTokens, IndustryType } from "@/utils/api";
+import { authApi, clearAuthTokens, setAuthTokens, ensureAuthToken, getAuthToken, IndustryType } from "@/utils/api";
 
 export type UserRole =
   | "superadmin"
@@ -17,6 +17,12 @@ export interface UserProfile {
   role: UserRole;
   roleTitle: string;
   studioName: string;
+  orgCode?: string;
+  department?: string;
+  canManageLeads?: boolean;
+  canManageProjects?: boolean;
+  canViewFinances?: boolean;
+  canApproveOrders?: boolean;
   avatar?: string;
   tenantId?: string;
   assignedProjectCode?: string;
@@ -32,6 +38,12 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     role: "superadmin",
     roleTitle: "Global Enterprise Orchestrator",
     studioName: "Basekraft Platform HQ",
+    orgCode: "BASEKRAFT-HQ",
+    department: "EXECUTIVE",
+    canManageLeads: true,
+    canManageProjects: true,
+    canViewFinances: true,
+    canApproveOrders: true,
     avatar: "PS",
     industry: "INTERIOR_DESIGN",
     industryDisplay: "Multi-Tenant Enterprise",
@@ -43,6 +55,12 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     role: "studio_admin",
     roleTitle: "Managing Director & Principal",
     studioName: "Basekraft Turnkey & Architecture",
+    orgCode: "ORG-BK-9182",
+    department: "PROJECTS",
+    canManageLeads: true,
+    canManageProjects: true,
+    canViewFinances: true,
+    canApproveOrders: true,
     avatar: "AS",
     tenantId: "tenant_bk_01",
     industry: "INTERIOR_DESIGN",
@@ -55,6 +73,12 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     role: "architect",
     roleTitle: "Senior Design & Project Lead",
     studioName: "Basekraft Turnkey & Architecture",
+    orgCode: "ORG-BK-9182",
+    department: "DESIGN",
+    canManageLeads: true,
+    canManageProjects: true,
+    canViewFinances: false,
+    canApproveOrders: false,
     avatar: "RK",
     tenantId: "tenant_bk_01",
     assignedProjectCode: "P-101",
@@ -68,6 +92,12 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     role: "contractor",
     roleTitle: "Turnkey MEP & Fit-out Director",
     studioName: "Apex MEP Turnkey Labs",
+    orgCode: "ORG-BK-9182",
+    department: "ENGINEERING",
+    canManageLeads: false,
+    canManageProjects: true,
+    canViewFinances: false,
+    canApproveOrders: false,
     avatar: "VO",
     tenantId: "tenant_bk_01",
     industry: "INTERIOR_DESIGN",
@@ -106,6 +136,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {
       // ignore storage errors
+    }
+
+    // Ensure client has active DRF JWT authentication tokens
+    if (!getAuthToken()) {
+      ensureAuthToken().catch(() => {});
     }
   }, []);
 
@@ -156,6 +191,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: mappedRole,
           roleTitle: res.user.role_title || "Company Member",
           studioName: res.user.company_details?.name || "Basekraft Enterprise",
+          orgCode: res.user.company_details?.org_code || undefined,
+          department: res.user.department || "PROJECTS",
+          canManageLeads: res.user.can_manage_leads ?? true,
+          canManageProjects: res.user.can_manage_projects ?? true,
+          canViewFinances: res.user.can_view_finances ?? false,
+          canApproveOrders: res.user.can_approve_orders ?? false,
           avatar: res.user.avatar_initials || "BK",
           tenantId: res.user.company || undefined,
           industry: (res.user.company_details?.industry as IndustryType) || "INTERIOR_DESIGN",

@@ -11,7 +11,7 @@ class UserCompanySummarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Company
-        fields = ['id', 'name', 'slug', 'status', 'city', 'country', 'industry', 'industry_display']
+        fields = ['id', 'name', 'slug', 'org_code', 'status', 'city', 'country', 'industry', 'industry_display']
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -28,6 +28,11 @@ class UserSerializer(serializers.ModelSerializer):
             'full_name',
             'role',
             'role_title',
+            'department',
+            'can_manage_leads',
+            'can_manage_projects',
+            'can_view_finances',
+            'can_approve_orders',
             'phone',
             'avatar_initials',
             'company',
@@ -55,11 +60,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['email'] = user.email
         token['role'] = user.role
         token['role_title'] = user.role_title
+        token['department'] = user.department
+        token['can_manage_leads'] = user.can_manage_leads
+        token['can_manage_projects'] = user.can_manage_projects
+        token['can_view_finances'] = user.can_view_finances
+        token['can_approve_orders'] = user.can_approve_orders
         if user.company_id:
             token['company_id'] = str(user.company_id)
             token['company_name'] = user.company.name
             token['company_slug'] = user.company.slug
             token['company_industry'] = user.company.industry
+            token['company_org_code'] = user.company.org_code
         else:
             token['company_id'] = None
         return token
@@ -73,7 +84,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    password = serializers.CharField(write_only=True, required=True, min_length=6)
 
     class Meta:
         model = User
@@ -85,6 +96,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'last_name',
             'role',
             'role_title',
+            'department',
+            'can_manage_leads',
+            'can_manage_projects',
+            'can_view_finances',
+            'can_approve_orders',
             'phone',
             'company',
         ]
@@ -96,3 +112,4 @@ class UserCreateSerializer(serializers.ModelSerializer):
         validated_data['username'] = email
         user = User.objects.create_user(password=password, **validated_data)
         return user
+

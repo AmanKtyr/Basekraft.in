@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingCart, Plus, Package, Truck, CheckCircle2, Clock, X } from "lucide-react";
 import { mockOrders, initialProjects } from "@/data/mockData";
 import { OrderItem } from "@/types";
+import { operationsApi } from "@/utils/api";
+
 
 export function NewOrderModal({
   isOpen,
@@ -161,7 +163,45 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderItem[]>(mockOrders);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    operationsApi.orders.list().then((backendOrders) => {
+      if (backendOrders && backendOrders.length > 0) {
+        const mapped: OrderItem[] = backendOrders.map((bo) => ({
+          id: bo.id,
+          orderNumber: bo.po_number,
+          projectCode: "PRJ-BK",
+          projectName: bo.project_name || "The Camellias Penthouse",
+          vendorName: bo.vendor_name,
+          itemCategory: bo.category,
+          amount: Number(bo.amount) || 2500000,
+          paidAmount: Math.round((Number(bo.amount) || 2500000) * 0.4),
+          status: (bo.status === 'APPROVED' ? 'Approved' : bo.status === 'FULFILLED' ? 'Delivered' : 'Pending') as any,
+          expectedDelivery: "2026-10-25",
+        }));
+
+        setOrders((prev) => {
+          const numbers = new Set(prev.map(p => p.orderNumber));
+          const novel = mapped.filter(m => !numbers.has(m.orderNumber));
+          return [...novel, ...prev];
+        });
+      }
+    }).catch(err => console.warn("Failed fetching live work orders:", err));
+  }, []);
+
+  const handleAddOrder = (newOrder: OrderItem) => {
+    setOrders((prev) => [newOrder, ...prev]);
+    operationsApi.orders.create({
+      po_number: newOrder.orderNumber,
+      title: `${newOrder.itemCategory} - ${newOrder.vendorName}`,
+      vendor_name: newOrder.vendorName,
+      category: newOrder.itemCategory,
+      amount: newOrder.amount,
+      status: 'APPROVED',
+    }).catch(e => console.warn("Sync order to backend failed:", e));
+  };
+
   const formatCurrency = (val: number) => {
+
     return `₹${val.toLocaleString("en-IN")}`;
   };
 
@@ -178,9 +218,6 @@ export default function OrdersPage() {
     }
   };
 
-  const handleAddOrder = (newOrder: OrderItem) => {
-    setOrders((prev) => [newOrder, ...prev]);
-  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

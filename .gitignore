@@ -1,41 +1,92 @@
 # ==============================================================================
-# Basekraft Studio - Root Git Ignore
+# Basekraft Enterprise OS - Root Git Ignore
 # ==============================================================================
 
-# Agent and AI Tooling Folders (Do not push to GitHub)
+# AI / IDE Tooling Artifacts & Sessions
 .agents/
-skills-lock.json
 .ai/
+.gemini/
+skills-lock.json
 
-# Secrets and Local Environment Configuration
+# Environment Secrets & Local Configs
 .env
 .env*.local
 *.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Node.js / Next.js
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-frontend/build/
-*.log
+# Node.js / Next.js (Frontend)
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+**/out/
+build/
+**/build/
+dist/
+**/dist/
+.turbo/
+coverage/
+*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Python & Django (Backend)
-backend/__pycache__/
-backend/*/__pycache__/
-backend/*.py[cod]
-backend/*/*.py[cod]
-backend/venv/
-backend/.venv/
-backend/env/
+# Python / Django (Backend)
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+env/
+**/env/
+venv/
+**/venv/
+.venv/
+**/.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite & Database Dumps
+*.sqlite3
+*.sqlite3-journal
 backend/db.sqlite3
-backend/media/
+backend/db.sqlite3-journal
+*.db
 
-# OS and Editor temporary files
+# Django Static & Media Uploads
+backend/media/
+backend/staticfiles/
+media/
+staticfiles/
+
+# Test & Coverage Outputs
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# OS & Editor Specific Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
+*.swp
+*.swo
+*~
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace

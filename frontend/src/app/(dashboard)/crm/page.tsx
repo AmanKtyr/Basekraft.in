@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
   UserCheck,
@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { LeadItem, ClientDirectoryItem, LeadStage } from "@/types";
 import { LEAD_STAGES, initialLeads, initialClients } from "@/data/crmData";
+import { operationsApi } from "@/utils/api";
+
 
 export default function CRMPage() {
   const [leads, setLeads] = useState<LeadItem[]>(initialLeads);
@@ -40,6 +42,36 @@ export default function CRMPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
+
+  // Fetch Live Leads from Backend
+  useEffect(() => {
+    operationsApi.leads.list().then((backendLeads) => {
+      if (backendLeads && backendLeads.length > 0) {
+        const mapped: LeadItem[] = backendLeads.map((bl) => ({
+          id: bl.id,
+          leadNumber: `LD-2026-${bl.id.slice(0, 4).toUpperCase()}`,
+          clientName: bl.client_name,
+          clientPhone: bl.client_phone || "+91 98111 00000",
+          clientEmail: bl.client_email || `${bl.client_name.toLowerCase().replace(/\s+/g, '')}@client.com`,
+          city: bl.city || "Gurugram",
+          propertyType: "Residential 4BHK" as LeadItem["propertyType"],
+          carpetAreaSqFt: 3600,
+          estimatedBudget: Number(bl.estimated_value) || 32000000,
+          stage: (bl.stage === 'NEW' ? 'new_inquiry' : bl.stage === 'CONTACTED' ? 'contacted' : bl.stage === 'QUALIFIED' ? 'qualification' : bl.stage === 'PROPOSAL_SENT' ? 'proposal_sent' : bl.stage === 'WON' ? 'won' : 'new_inquiry') as LeadStage,
+          leadSource: (bl.source === 'DIRECT' ? 'Direct Referral' : bl.source === 'WEBSITE' ? 'Basekraft Web Portal' : 'Architect Network') as LeadItem["leadSource"],
+          assignedDesigner: bl.assigned_to_name || "Aman Sharma",
+          notes: bl.notes || bl.title,
+          createdAt: bl.created_at ? bl.created_at.split('T')[0] : "2026-09-24",
+        }));
+
+        setLeads((prev) => {
+          const names = new Set(prev.map(p => p.clientName));
+          const fresh = mapped.filter(m => !names.has(m.clientName));
+          return [...fresh, ...prev];
+        });
+      }
+    }).catch(err => console.warn("Failed loading live leads:", err));
+  }, []);
 
   // Modals
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
@@ -217,6 +249,18 @@ export default function CRMPage() {
     };
 
     setLeads([newLead, ...leads]);
+
+    // Asynchronously create in Django DRF backend
+    operationsApi.leads.create({
+      title: `${newLeadForm.propertyType} - ${newLeadForm.clientName}`,
+      client_name: newLeadForm.clientName,
+      client_phone: newLeadForm.clientPhone,
+      client_email: newLeadForm.clientEmail,
+      city: newLeadForm.city,
+      estimated_value: Number(newLeadForm.estimatedBudget),
+      stage: 'NEW',
+      notes: newLeadForm.notes,
+    }).catch(err => console.warn("Could not sync lead to backend:", err));
 
     // Also add to prospective clients directory if not existing
     setClients((prev) => [

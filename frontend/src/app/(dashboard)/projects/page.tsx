@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LayoutGrid, Table as TableIcon, Plus } from "lucide-react";
 import { initialProjects } from "@/data/mockData";
 import { ProjectsTable } from "@/components/projects/ProjectsTable";
 import { KanbanBoard } from "@/components/projects/KanbanBoard";
 import { NewProjectModal } from "@/components/projects/NewProjectModal";
-import { Project } from "@/types";
+import { Project, ProjectStage, ProjectSector } from "@/types";
+import { operationsApi } from "@/utils/api";
 
 function ProjectsContent() {
   const searchParams = useSearchParams();
@@ -18,8 +19,58 @@ function ProjectsContent() {
   const [selectedStage, setSelectedStage] = useState<string>(initialStage);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    operationsApi.projects.list().then((backendProjects) => {
+      if (backendProjects && backendProjects.length > 0) {
+        const mapped: Project[] = backendProjects.map((bp) => ({
+          id: bp.id,
+          code: bp.code,
+          name: bp.name,
+          clientName: bp.client_name,
+          clientPhone: bp.client_phone || "+91 98111 00000",
+          clientEmail: bp.client_email || `${bp.client_name.toLowerCase().replace(/\s+/g, '')}@client.com`,
+          city: bp.city || "Gurugram",
+          state: "Haryana",
+          sector: "Interior Design & Turnkey" as ProjectSector,
+          stage: (bp.stage === 'PLANNING' ? 'sales' : bp.stage === 'DESIGN' ? 'design' : bp.stage === 'EXECUTION' ? 'execution' : bp.stage === 'HANDOVER' ? 'handover' : 'execution') as ProjectStage,
+          subStage: bp.stage_display || "Active Fitout",
+          budget: Number(bp.budget) || 25000000,
+          spent: Number(bp.spent) || 12000000,
+          startDate: bp.start_date || "2025-11-01",
+          targetHandover: bp.target_handover || "2026-11-30",
+          pmName: bp.assigned_lead_name || "Aman Sharma",
+          designerName: "Riya Kapoor",
+          progressPercent: bp.progress_pct || 50,
+          totalCheckpoints: 12,
+          completedCheckpoints: Math.round(((bp.progress_pct || 50) / 100) * 12),
+          pendingApprovalsCount: 2,
+          pendingIssuesCount: 1,
+          description: `Turnkey commercial project for ${bp.client_name}`,
+          propertyType: "Luxury Villa",
+        }));
+
+        setProjects((prev) => {
+          const codes = new Set(prev.map(p => p.code));
+          const novel = mapped.filter(m => !codes.has(m.code));
+          return [...novel, ...prev];
+        });
+      }
+    }).catch(err => console.warn("Failed fetching live projects:", err));
+  }, []);
+
   const handleAddProject = (newProject: Project) => {
     setProjects((prev) => [newProject, ...prev]);
+    operationsApi.projects.create({
+      name: newProject.name,
+      code: newProject.code,
+      client_name: newProject.clientName,
+      client_phone: newProject.clientPhone,
+      city: newProject.city,
+      budget: newProject.budget,
+      spent: newProject.spent,
+      stage: 'EXECUTION',
+      progress_pct: newProject.progressPercent,
+    }).catch(err => console.warn("Could not sync project to backend:", err));
   };
 
   return (

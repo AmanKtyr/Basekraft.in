@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   FileSpreadsheet,
@@ -29,6 +29,8 @@ import {
 import { initialProjects } from "@/data/mockData";
 import { ProjectSector } from "@/types";
 import { QuotationLetterheadModal } from "@/components/quotes/QuotationLetterheadModal";
+import { operationsApi } from "@/utils/api";
+
 
 export interface BOQLineItem {
   id: string;
@@ -549,6 +551,46 @@ export default function QuotesPage() {
   const [expandedQuoteId, setExpandedQuoteId] = useState<string | null>("q-1");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    operationsApi.quotes.list().then((backendQuotes) => {
+      if (backendQuotes && backendQuotes.length > 0) {
+        const mapped: QuoteProposal[] = backendQuotes.map((bq) => ({
+          id: bq.id,
+          code: bq.quote_number,
+          projectId: bq.project || "proj-1",
+          projectCode: "PRJ-BK",
+          projectName: bq.project_name || "The Camellias Penthouse",
+          clientName: bq.client_name,
+          sector: "Interior Design & Turnkey" as ProjectSector,
+          status: (bq.status === 'APPROVED' ? 'Approved' : bq.status === 'SENT' ? 'Client Review' : 'Draft') as any,
+          createdDate: bq.created_at ? new Date(bq.created_at).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "24 Sep 2026",
+          lastUpdated: "Recently synced",
+          approvedBy: bq.status === 'APPROVED' ? "Aman Sharma" : "—",
+          total: Number(bq.total_amount) || 14250000,
+          items: [
+            {
+              id: `item-${bq.id}-1`,
+              roomOrZone: "Living & Master Zone",
+              category: "Architectural Fitout",
+              description: bq.title,
+              qty: 1,
+              uom: "LumpSum",
+              unitRate: Number(bq.total_amount) || 14250000,
+              gstPercent: 18,
+              marginPercent: Number(bq.margin_pct) || 22,
+            }
+          ],
+        }));
+
+        setQuotes((prev) => {
+          const codes = new Set(prev.map(p => p.code));
+          const novel = mapped.filter(m => !codes.has(m.code));
+          return [...novel, ...prev];
+        });
+      }
+    }).catch(err => console.warn("Failed fetching live quotes:", err));
+  }, []);
+
   // Letterhead Proposal Modal State
   const [selectedQuoteForLetterhead, setSelectedQuoteForLetterhead] = useState<QuoteProposal | null>(null);
   const [isLetterheadModalOpen, setIsLetterheadModalOpen] = useState(false);
@@ -567,7 +609,17 @@ export default function QuotesPage() {
     setQuotes((prev) => [newQ, ...prev]);
     setExpandedQuoteId(newQ.id);
     showToast(`Quotation ${newQ.code} created successfully!`);
+
+    operationsApi.quotes.create({
+      quote_number: newQ.code,
+      title: newQ.projectName,
+      client_name: newQ.clientName,
+      total_amount: newQ.total,
+      margin_pct: 22.5,
+      status: 'DRAFT',
+    }).catch(e => console.warn("Sync quote to backend failed:", e));
   };
+
 
   const toggleExpand = (id: string) => {
     setExpandedQuoteId(expandedQuoteId === id ? null : id);

@@ -24,6 +24,7 @@ class CompanySerializer(serializers.ModelSerializer):
             'id',
             'name',
             'slug',
+            'org_code',
             'industry',
             'industry_display',
             'city',
@@ -40,7 +41,7 @@ class CompanySerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'members_count', 'storage_used_gb', 'industry_display']
+        read_only_fields = ['id', 'slug', 'org_code', 'created_at', 'updated_at', 'members_count', 'storage_used_gb', 'industry_display']
 
 
 class CompanyCreateWithAdminSerializer(serializers.ModelSerializer):
@@ -68,6 +69,7 @@ class CompanyCreateWithAdminSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'slug',
+            'org_code',
             'industry',
             'industry_display',
             'city',

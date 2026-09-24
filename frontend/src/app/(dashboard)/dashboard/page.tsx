@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -30,14 +30,23 @@ import {
   IndustryType,
   INDUSTRY_DOCUMENTS,
   INDUSTRY_OPTIONS,
+  operationsApi,
+  DashboardStatsData,
 } from "@/utils/api";
 
 export default function DashboardOverview() {
   const { user, role, industry, setIndustry } = useAuth();
   const currentIndustry = user.industry || industry || "INTERIOR_DESIGN";
+  const [stats, setStats] = useState<DashboardStatsData | null>(null);
 
-  const totalValue = initialProjects.reduce((acc, p) => acc + p.budget, 0);
-  const totalSpent = initialProjects.reduce((acc, p) => acc + p.spent, 0);
+  useEffect(() => {
+    operationsApi.getDashboardStats().then((data) => {
+      if (data) setStats(data);
+    }).catch((err) => console.warn("Live dashboard stats fetch:", err));
+  }, []);
+
+  const totalValue = stats?.projects.total_budget || initialProjects.reduce((acc, p) => acc + p.budget, 0);
+  const totalSpent = stats?.projects.total_spent || initialProjects.reduce((acc, p) => acc + p.spent, 0);
 
   const formatCurrency = (val: number) => {
     if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
@@ -75,6 +84,11 @@ export default function DashboardOverview() {
             <span className="text-xs text-muted-foreground font-mono">
               • {user.studioName || "Basekraft Enterprise"}
             </span>
+            {(user.orgCode || stats?.company?.org_code) && (
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                Org ID: {user.orgCode || stats?.company?.org_code}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
               {getIndustryIcon(currentIndustry)}
               <span>{currentIndustryMeta.label}</span>
@@ -88,6 +102,7 @@ export default function DashboardOverview() {
             <strong className="text-foreground">{currentIndustryMeta.label}</strong>.
           </p>
         </div>
+
 
         <div className="flex items-center gap-2">
           <Link

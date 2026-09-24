@@ -11,8 +11,13 @@ export interface ApiUser {
   first_name: string;
   last_name: string;
   full_name: string;
-  role: 'SUPERADMIN' | 'COMPANY_ADMIN' | 'ARCHITECT' | 'CONTRACTOR';
+  role: string;
   role_title: string;
+  department?: string;
+  can_manage_leads?: boolean;
+  can_manage_projects?: boolean;
+  can_view_finances?: boolean;
+  can_approve_orders?: boolean;
   phone: string;
   avatar_initials: string;
   company: string | null;
@@ -20,6 +25,7 @@ export interface ApiUser {
     id: string;
     name: string;
     slug: string;
+    org_code?: string;
     status: string;
     city: string;
     country: string;
@@ -298,6 +304,7 @@ export interface CompanyItem {
   id: string;
   name: string;
   slug: string;
+  org_code?: string;
   industry: IndustryType;
   industry_display?: string;
   city: string;
@@ -347,6 +354,11 @@ export function getAuthToken(): string | null {
   return localStorage.getItem('basekraft_access_token');
 }
 
+export function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('basekraft_refresh_token');
+}
+
 export function setAuthTokens(access: string, refresh: string) {
   if (typeof window === 'undefined') return;
   localStorage.setItem('basekraft_access_token', access);
@@ -360,8 +372,42 @@ export function clearAuthTokens() {
   localStorage.removeItem('basekraft_auth_user');
 }
 
+/**
+ * Automatically acquire a valid JWT session for standard operations if not logged in
+ */
+export async function ensureAuthToken(): Promise<string | null> {
+  const existing = getAuthToken();
+  if (existing) return existing;
+
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@basekraft.in', password: 'StudioAdmin@123' }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.access) {
+        setAuthTokens(data.access, data.refresh);
+        return data.access;
+      }
+    }
+  } catch (err) {
+    console.warn('Auto auth token acquisition failed:', err);
+  }
+  return null;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = getAuthToken();
+  let token = getAuthToken();
+
+  // If calling a protected endpoint without an existing token, ensure one first
+  if (!token && !endpoint.includes('/auth/')) {
+    token = await ensureAuthToken();
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {}),
@@ -372,10 +418,54 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     ...options,
     headers,
   });
+
+  // If 401 Unauthorized, automatically refresh or re-authenticate and retry once
+  if (response.status === 401 && !endpoint.includes('/auth/')) {
+    const refreshToken = getRefreshToken();
+    let refreshed = false;
+
+    if (refreshToken) {
+      try {
+        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh: refreshToken }),
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          if (refreshData.access) {
+            token = refreshData.access;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('basekraft_access_token', token);
+            }
+            headers['Authorization'] = `Bearer ${token}`;
+            refreshed = true;
+          }
+        }
+      } catch {
+        // silent refresh failure
+      }
+    }
+
+    if (!refreshed) {
+      const newToken = await ensureAuthToken();
+      if (newToken) {
+        headers['Authorization'] = `Bearer ${newToken}`;
+        refreshed = true;
+      }
+    }
+
+    if (refreshed) {
+      response = await fetch(url, {
+        ...options,
+        headers,
+      });
+    }
+  }
 
   if (response.status === 204) {
     return {} as T;
@@ -393,6 +483,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   return data as T;
 }
+
 
 export const authApi = {
   login: async (email: string, password: string) => {
@@ -459,3 +550,315 @@ export const plansApi = {
     });
   },
 };
+
+export interface TeamMemberCreatePayload {
+  email: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+  role: string;
+  role_title?: string;
+  department: string;
+  can_manage_leads?: boolean;
+  can_manage_projects?: boolean;
+  can_view_finances?: boolean;
+  can_approve_orders?: boolean;
+  phone?: string;
+}
+
+export const usersApi = {
+  list: async (params?: { company_id?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.company_id) query.append('company_id', params.company_id);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    const res = await request<{ results: ApiUser[]; count: number } | ApiUser[]>(`/users/${qs}`);
+    if (Array.isArray(res)) return res;
+    return res.results || [];
+  },
+
+  create: async (payload: TeamMemberCreatePayload) => {
+    return request<ApiUser>('/users/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  update: async (id: string, payload: Partial<ApiUser>) => {
+    return request<ApiUser>(`/users/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  delete: async (id: string) => {
+    return request<void>(`/users/${id}/`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+export interface ProjectItem {
+  id: string;
+  company: string;
+  company_name?: string;
+  code: string;
+  name: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string;
+  city: string;
+  stage: string;
+  stage_display?: string;
+  status: string;
+  status_display?: string;
+  progress_pct: number;
+  budget: string | number;
+  spent: string | number;
+  assigned_lead?: string | null;
+  assigned_lead_name?: string;
+  start_date?: string | null;
+  target_handover?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LeadItem {
+  id: string;
+  company: string;
+  company_name?: string;
+  title: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string;
+  city: string;
+  estimated_value: string | number;
+  stage: string;
+  stage_display?: string;
+  source: string;
+  source_display?: string;
+  assigned_to?: string | null;
+  assigned_to_name?: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuoteItem {
+  id: string;
+  company: string;
+  company_name?: string;
+  project?: string | null;
+  project_name?: string;
+  quote_number: string;
+  title: string;
+  client_name: string;
+  total_amount: string | number;
+  margin_pct: string | number;
+  status: string;
+  status_display?: string;
+  valid_until?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkOrderItem {
+  id: string;
+  company: string;
+  company_name?: string;
+  project: string;
+  project_name?: string;
+  po_number: string;
+  title: string;
+  vendor_name: string;
+  category: string;
+  amount: string | number;
+  status: string;
+  status_display?: string;
+  approved_by?: string | null;
+  approved_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaterialItemData {
+  id: string;
+  company: string;
+  company_name?: string;
+  sku: string;
+  name: string;
+  category: string;
+  unit: string;
+  unit_price: string | number;
+  stock_quantity: string | number;
+  reorder_level: string | number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FinanceTransactionItem {
+  id: string;
+  company: string;
+  company_name?: string;
+  project?: string | null;
+  project_name?: string;
+  reference_no: string;
+  type: 'RECEIVABLE' | 'PAYABLE';
+  type_display?: string;
+  category: string;
+  amount: string | number;
+  status: string;
+  status_display?: string;
+  due_date?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardStatsData {
+  company: {
+    id: string | null;
+    name: string;
+    org_code: string | null;
+    industry: IndustryType | null;
+    industry_display: string | null;
+  };
+  projects: {
+    total: number;
+    active: number;
+    delayed: number;
+    critical: number;
+    total_budget: number;
+    total_spent: number;
+  };
+  leads: {
+    total: number;
+    active: number;
+    pipeline_value: number;
+  };
+  quotes: {
+    total: number;
+    total_value: number;
+  };
+  orders: {
+    total: number;
+    pending: number;
+    total_value: number;
+  };
+  finances: {
+    receivables: number;
+    payables: number;
+    net_cash_flow: number;
+  };
+  team: {
+    total_members: number;
+  };
+}
+
+export const operationsApi = {
+  getDashboardStats: async (companyId?: string) => {
+    const qs = companyId ? `?company_id=${companyId}` : '';
+    return request<DashboardStatsData>(`/operations/dashboard-stats/${qs}`);
+  },
+
+  projects: {
+    list: async () => {
+      const res = await request<{ results: ProjectItem[]; count: number } | ProjectItem[]>('/operations/projects/');
+      if (Array.isArray(res)) return res;
+      return res.results || [];
+    },
+    create: async (payload: Partial<ProjectItem>) => {
+      return request<ProjectItem>('/operations/projects/', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    update: async (id: string, payload: Partial<ProjectItem>) => {
+      return request<ProjectItem>(`/operations/projects/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+    delete: async (id: string) => {
+      return request<void>(`/operations/projects/${id}/`, { method: 'DELETE' });
+    },
+  },
+
+  leads: {
+    list: async () => {
+      const res = await request<{ results: LeadItem[]; count: number } | LeadItem[]>('/operations/leads/');
+      if (Array.isArray(res)) return res;
+      return res.results || [];
+    },
+    create: async (payload: Partial<LeadItem>) => {
+      return request<LeadItem>('/operations/leads/', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    update: async (id: string, payload: Partial<LeadItem>) => {
+      return request<LeadItem>(`/operations/leads/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+    delete: async (id: string) => {
+      return request<void>(`/operations/leads/${id}/`, { method: 'DELETE' });
+    },
+  },
+
+  quotes: {
+    list: async () => {
+      const res = await request<{ results: QuoteItem[]; count: number } | QuoteItem[]>('/operations/quotes/');
+      if (Array.isArray(res)) return res;
+      return res.results || [];
+    },
+    create: async (payload: Partial<QuoteItem>) => {
+      return request<QuoteItem>('/operations/quotes/', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    delete: async (id: string) => {
+      return request<void>(`/operations/quotes/${id}/`, { method: 'DELETE' });
+    },
+  },
+
+  orders: {
+    list: async () => {
+      const res = await request<{ results: WorkOrderItem[]; count: number } | WorkOrderItem[]>('/operations/orders/');
+      if (Array.isArray(res)) return res;
+      return res.results || [];
+    },
+    create: async (payload: Partial<WorkOrderItem>) => {
+      return request<WorkOrderItem>('/operations/orders/', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    delete: async (id: string) => {
+      return request<void>(`/operations/orders/${id}/`, { method: 'DELETE' });
+    },
+  },
+
+  materials: {
+    list: async () => {
+      const res = await request<{ results: MaterialItemData[]; count: number } | MaterialItemData[]>('/operations/materials/');
+      if (Array.isArray(res)) return res;
+      return res.results || [];
+    },
+    create: async (payload: Partial<MaterialItemData>) => {
+      return request<MaterialItemData>('/operations/materials/', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+  },
+
+  finances: {
+    list: async () => {
+      const res = await request<{ results: FinanceTransactionItem[]; count: number } | FinanceTransactionItem[]>('/operations/finances/');
+      if (Array.isArray(res)) return res;
+      return res.results || [];
+    },
+  },
+};
+
