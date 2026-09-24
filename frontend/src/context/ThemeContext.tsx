@@ -14,20 +14,28 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
+  const [theme, setThemeState] = useState<Theme>("light");
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    // Check saved theme or system preference
+    // Read saved preference or current DOM state initialized by inline script
     const saved = localStorage.getItem("basekraft-theme") as Theme | null;
-    const initialTheme: Theme = saved || "dark";
-    setThemeState(initialTheme);
-    applyTheme(initialTheme);
+    const isDomDark = document.documentElement.classList.contains("dark");
+    
+    if (saved) {
+      setThemeState(saved);
+      applyTheme(saved);
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const initial: Theme = prefersDark ? "dark" : "light";
+      setThemeState(initial);
+      applyTheme(initial);
+    }
   }, []);
 
   const applyTheme = (currentTheme: Theme) => {
     const root = document.documentElement;
-    let effective: "light" | "dark" = "dark";
+    let effective: "light" | "dark" = "light";
 
     if (currentTheme === "system") {
       const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -47,7 +55,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem("basekraft-theme", newTheme);
+    try {
+      localStorage.setItem("basekraft-theme", newTheme);
+    } catch {}
     applyTheme(newTheme);
   };
 

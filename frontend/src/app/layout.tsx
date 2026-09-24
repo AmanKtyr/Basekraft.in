@@ -4,14 +4,30 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
-  title: "Basekraft — International Architectural Studio OS & Turnkey Platform",
-  description: "Next-generation operating system for luxury architecture, interior design, and precision turnkey fit-outs.",
+  title: "Basekraft — International Enterprise OS & Turnkey Platform",
+  description: "Next-generation operating system for turnkey fit-outs, solar EPC, modular manufacturing, and civil construction.",
 };
+
+const themeScript = `
+(function() {
+  try {
+    var savedTheme = localStorage.getItem('basekraft-theme');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  } catch (e) {}
+})();
+`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased dark" suppressHydrationWarning>
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -19,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans bg-background text-foreground antialiased selection:bg-zinc-800 selection:text-white dark:selection:bg-zinc-200 dark:selection:text-zinc-900">
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
@@ -27,4 +43,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
