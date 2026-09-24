@@ -104,18 +104,18 @@ export default function RootWebsiteHomePage() {
 
             {/* Quick Demo Preview Link */}
             <div className="pt-5 flex items-center justify-center gap-2 text-xs text-zinc-400 font-mono">
-              <span>Looking for live client view?</span>
+              <span>Ready to explore the workspace?</span>
               <Link
-                href="/client-portal/P-619"
-                target="_blank"
+                href="/login"
                 className="text-purple-300 hover:text-purple-200 font-semibold underline underline-offset-4 inline-flex items-center gap-1 transition"
               >
-                <span>Preview Live Client Portal (P-619)</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
+                <span>Access Studio OS Workspace</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
         </section>
+
 
         {/* ========================================================= */}
         {/* 3. STUDIO TRACK RECORD METRICS WITH GLOWING DIVIDERS */}
@@ -510,8 +510,9 @@ export default function RootWebsiteHomePage() {
                     </li>
                     <li className="flex items-center gap-3">
                       <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                      <span>Full Multi-Login (Superadmin + Client)</span>
+                      <span>Full Studio Multi-Login & RBAC Access</span>
                     </li>
+
                     <li className="flex items-center gap-3">
                       <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
                       <span>Site Snag Resolution with Photos</span>
@@ -668,16 +669,16 @@ export default function RootWebsiteHomePage() {
                 {/* Footer Link */}
                 <div className="p-6 pt-0">
                   <Link
-                    href={`/client-portal/${item.portalCode}`}
-                    target="_blank"
+                    href="/login"
                     className="button-border-gradient w-full py-2.5 px-3 rounded-lg text-xs font-semibold text-center text-zinc-200 hover:text-white transition flex items-center justify-center gap-1.5"
                   >
-                    <span>Open Client Portal Walkthrough</span>
-                    <ExternalLink className="w-3 h-3 text-zinc-400" />
+                    <span>Inspect In Studio Workspace</span>
+                    <ArrowRight className="w-3 h-3 text-zinc-400" />
                   </Link>
                 </div>
               </div>
             ))}
+
           </div>
         </section>
 

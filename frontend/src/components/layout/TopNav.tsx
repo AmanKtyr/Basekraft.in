@@ -9,25 +9,29 @@ import {
   Bell,
   Command,
   ChevronDown,
-  User,
   Settings,
-  Users,
   Clock,
   LogOut,
   ExternalLink,
-  ShieldCheck,
-  Building,
-  CheckCircle2,
-  AlertCircle,
-  Laptop,
-  Menu,
-  Crown,
   Globe,
+  Menu,
+  PanelLeft,
+  CheckCircle2,
+
+  AlertCircle,
+  FolderKanban,
+  Users,
+  CheckSquare,
+  FileSpreadsheet,
+  Building2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { initialProjects } from "@/data/mockData";
 import { useAuth, UserRole } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
+import { useSidebar } from "@/context/SidebarContext";
 
 interface TopNavProps {
   onOpenNewProject?: () => void;
@@ -83,47 +87,56 @@ const initialNotifications: NotificationItem[] = [
   },
 ];
 
+const navigationShortcuts = [
+  { label: "Dashboard Overview", href: "/dashboard", icon: Building2 },
+  { label: "Projects Portfolio", href: "/projects", icon: FolderKanban },
+  { label: "CRM & Leads", href: "/crm", icon: Users },
+  { label: "All Tasks & Snags", href: "/tasks", icon: CheckSquare },
+  { label: "BOQ & Quotations", href: "/quotes", icon: FileSpreadsheet },
+];
+
 export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
   const router = useRouter();
   const { user, role, switchRole, logout } = useAuth();
-  const [isDark, setIsDark] = useState(false);
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const { toggleSidebar, isCollapsed } = useSidebar();
+
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const commandInputRef = useRef<HTMLInputElement>(null);
 
   const unreadCount = notifications.filter((n) => n.unread).length;
-
-  const toggleTheme = () => {
-    if (document.documentElement.classList.contains("dark")) {
-      document.documentElement.classList.remove("dark");
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      setIsDark(true);
-    }
-  };
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
   };
 
+  // Keyboard shortcut Ctrl+K / Cmd+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        const input = searchContainerRef.current?.querySelector("input");
-        input?.focus();
+        setIsCommandOpen((prev) => !prev);
+      }
+      if (e.key === "Escape" && isCommandOpen) {
+        setIsCommandOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isCommandOpen]);
+
+  useEffect(() => {
+    if (isCommandOpen) {
+      setTimeout(() => commandInputRef.current?.focus(), 50);
+    }
+  }, [isCommandOpen]);
 
   // Close menus on outside click
   useEffect(() => {
@@ -134,16 +147,12 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
       if (notifMenuRef.current && !notifMenuRef.current.contains(e.target as Node)) {
         setIsNotifOpen(false);
       }
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setIsSearchFocused(false);
-      }
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Filtered projects for search
   const filteredSearchProjects = initialProjects.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -153,402 +162,395 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
   );
 
   return (
-    <header className="h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none">
-      {/* Left Area: Mobile Menu Toggle + Search Bar */}
-      <div className="flex items-center gap-2 flex-1 max-w-xs sm:max-w-sm md:max-w-md">
-        {/* Mobile Hamburger Toggle */}
-        <button
-          type="button"
-          onClick={onToggleMobileMenu}
-          aria-label="Open mobile navigation menu"
-          className="lg:hidden p-1.5 -ml-1 rounded-md text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer shrink-0"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <>
+      <header className="h-14 border-b border-border bg-background/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none">
+        {/* Left Area: Mobile Menu, Sidebar Toggle, & Search Trigger */}
+        <div className="flex items-center gap-2 flex-1 max-w-sm sm:max-w-md">
+          {/* Mobile Drawer Trigger */}
+          <button
+            type="button"
+            onClick={onToggleMobileMenu}
+            aria-label="Open mobile navigation menu"
+            className="lg:hidden p-2 -ml-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer shrink-0"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
 
-        {/* Search Input with Dynamic Results Dropdown */}
-        <div className="relative flex-1" ref={searchContainerRef}>
-          <div className="relative w-full">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search projects, clients, BOQs..."
-              value={searchQuery}
-              onFocus={() => setIsSearchFocused(true)}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md pl-8 sm:pl-9 pr-8 sm:pr-14 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100 transition"
-            />
-            <div className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 items-center gap-0.5 text-[10px] text-zinc-400 font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 pointer-events-none">
+          {/* Desktop Sidebar Collapse Toggle (shadcn-admin feature) */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar width"
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            className="hidden lg:flex p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer shrink-0"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </button>
+
+          {/* Shadcn Admin Command Search Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsCommandOpen(true)}
+            className="w-full flex items-center justify-between bg-muted/60 hover:bg-muted/90 border border-input rounded-md px-3 py-1.5 text-xs text-muted-foreground transition cursor-pointer"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <Search className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Search studio, projects, BOQs...</span>
+            </div>
+            <div className="flex items-center gap-1 text-[10px] font-mono bg-background px-1.5 py-0.5 rounded border border-border shrink-0 shadow-2xs">
               <Command className="w-2.5 h-2.5" />
               <span>K</span>
             </div>
-          </div>
-
-          {/* Live Search Quick-Jump Dropdown */}
-          {isSearchFocused && searchQuery.length > 0 && (
-            <div className="absolute left-0 top-11 w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-2 z-50 animate-in fade-in-50 zoom-in-95 duration-100">
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 border-b border-zinc-100 dark:border-zinc-900">
-                Matching Projects ({filteredSearchProjects.length})
-              </div>
-            <div className="max-h-60 overflow-y-auto py-1">
-              {filteredSearchProjects.length === 0 ? (
-                <div className="p-4 text-center text-xs text-zinc-400">
-                  No matching projects found for &quot;{searchQuery}&quot;
-                </div>
-              ) : (
-                filteredSearchProjects.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => {
-                      setIsSearchFocused(false);
-                      setSearchQuery("");
-                      router.push(`/projects/${p.code}`);
-                    }}
-                    className="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-zinc-100 dark:hover:bg-zinc-900 transition text-xs"
-                  >
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">
-                          {p.code}
-                        </span>
-                        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                          {p.name}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-zinc-400">
-                        {p.clientName} • {p.city}
-                      </span>
-                    </div>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded font-mono uppercase bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                      {p.stage}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+          </button>
         </div>
-      </div>
 
-      {/* Right Controls Area: Actions, Notifications, & User Profile Dropdown */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Primary Action Button: New Project */}
-        <button
-          onClick={onOpenNewProject}
-          className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">New Project</span>
-        </button>
-
-        {/* Theme Toggle Button */}
-        <button
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          className="p-1.5 sm:p-2 rounded-md text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition"
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-
-        {/* Notifications Bell with Flyout Drawer */}
-        <div className="relative" ref={notifMenuRef}>
+        {/* Right Controls Area: Actions, Notifications, Theme, & User Profile */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Primary Action Button: New Project */}
           <button
-            onClick={() => setIsNotifOpen(!isNotifOpen)}
-            aria-label="Notifications"
-            title="Studio Notifications"
-            className="relative p-1.5 sm:p-2 rounded-md text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition"
+            onClick={onOpenNewProject}
+            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-primary-foreground px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs cursor-pointer"
           >
-            <Bell className="w-4 h-4" />
-            {unreadCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-zinc-950 dark:bg-zinc-100 ring-2 ring-white dark:ring-zinc-950 absolute top-1.5 right-1.5" />
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">New Project</span>
+          </button>
+
+          {/* Theme Toggle Button (shadcn-admin style) */}
+
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            title={resolvedTheme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer"
+          >
+            {resolvedTheme === "dark" ? (
+              <Sun className="w-4 h-4 transition-transform hover:rotate-45" />
+            ) : (
+              <Moon className="w-4 h-4 transition-transform hover:-rotate-12" />
             )}
           </button>
 
-          {/* Notifications Drawer */}
-          {isNotifOpen && (
-            <div className="fixed sm:absolute right-2 sm:right-0 top-14 sm:top-10 w-[calc(100vw-1rem)] max-w-sm sm:w-96 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 animate-in fade-in-50 zoom-in-95 duration-100 overflow-hidden">
-              <div className="p-3 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">
-                    Notifications
-                  </span>
+          {/* Notifications Bell with Popover */}
+          <div className="relative" ref={notifMenuRef}>
+            <button
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              aria-label="Notifications"
+              title="Studio Notifications"
+              className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-primary ring-2 ring-background absolute top-1.5 right-1.5" />
+              )}
+            </button>
+
+            {/* Notifications Popover */}
+            {isNotifOpen && (
+              <div className="fixed sm:absolute right-2 sm:right-0 top-14 sm:top-10 w-[calc(100vw-1rem)] max-w-sm sm:w-96 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl z-50 animate-in fade-in-50 zoom-in-95 duration-100 overflow-hidden">
+                <div className="p-3 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-xs text-foreground">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground font-bold">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold">
-                      {unreadCount} new
-                    </span>
+                    <button
+                      onClick={markAllRead}
+                      className="text-[11px] text-muted-foreground hover:text-foreground transition cursor-pointer"
+                    >
+                      Mark all read
+                    </button>
                   )}
                 </div>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllRead}
-                    className="text-[11px] text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
-                  >
-                    Mark all read
-                  </button>
-                )}
-              </div>
 
-              <div className="max-h-80 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-900">
-                {notifications.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`p-3 text-xs transition flex gap-2.5 ${
-                      item.unread
-                        ? "bg-zinc-50/70 dark:bg-zinc-900/40"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-900/20"
-                    }`}
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      {item.type === "approval" ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      ) : item.type === "delay" ? (
-                        <AlertCircle className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
-                      ) : (
-                        <Clock className="w-4 h-4 text-zinc-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                          {item.title}
-                        </span>
-                        <span className="text-[10px] font-mono text-zinc-400 shrink-0">
-                          {item.time}
-                        </span>
+                <div className="max-h-80 overflow-y-auto divide-y divide-border">
+                  {notifications.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-3 text-xs transition flex gap-2.5 ${
+                        item.unread ? "bg-accent/40" : "hover:bg-accent/20"
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        {item.type === "approval" ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        ) : item.type === "delay" ? (
+                          <AlertCircle className="w-4 h-4 text-amber-500" />
+                        ) : (
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                        )}
                       </div>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
-                        {item.desc}
-                      </p>
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className="font-mono text-[9px] px-1 py-0.2 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-                          {item.projectCode}
-                        </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-semibold text-foreground truncate">
+                            {item.title}
+                          </span>
+                          <span className="text-[10px] font-mono text-muted-foreground shrink-0">
+                            {item.time}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                          {item.desc}
+                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="font-mono text-[9px] px-1 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                            {item.projectCode}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                <div className="p-2 border-t border-border bg-muted/40 text-center">
+                  <Link
+                    href="/tasks"
+                    onClick={() => setIsNotifOpen(false)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground font-medium"
+                  >
+                    View All Field Activity →
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User Profile Dropdown */}
+          <div className="relative pl-1 border-l border-border" ref={userMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent transition cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded-full bg-primary/10 border border-border text-foreground font-bold text-xs flex items-center justify-center shrink-0">
+                {user.avatar || user.name.slice(0, 2).toUpperCase()}
               </div>
 
-              <div className="p-2 border-t border-zinc-100 dark:border-zinc-900 bg-zinc-50 dark:bg-zinc-900/50 text-center">
-                <Link
-                  href="/tasks"
-                  onClick={() => setIsNotifOpen(false)}
-                  className="text-[11px] text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 font-medium"
-                >
-                  View All Field Activity →
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* USER PROFILE & DROPDOWN MENU */}
-        <div className="relative pl-1 border-l border-zinc-200 dark:border-zinc-800" ref={userMenuRef}>
-          <button
-            type="button"
-            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-2 p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 transition"
-          >
-            {/* User Avatar Circle */}
-            <div className="w-7 h-7 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold text-xs flex items-center justify-center shrink-0">
-              {user.avatar || user.name.slice(0, 2).toUpperCase()}
-            </div>
-
-            {/* Name and Designation */}
-            <div className="hidden md:block text-left">
-              <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
-                {user.name}
-              </div>
-              <div className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-tight">
-                {user.roleTitle}
-              </div>
-            </div>
-
-            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-          </button>
-
-          {/* User Profile Dropdown Menu */}
-          {isUserMenuOpen && (
-            <div className="absolute right-0 top-11 w-64 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1.5 z-50 animate-in fade-in-50 zoom-in-95 duration-100 text-xs">
-              {/* Account Info Header */}
-              <div className="px-3.5 py-2.5 border-b border-zinc-100 dark:border-zinc-900">
-                <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-xs">
+              <div className="hidden md:block text-left">
+                <div className="text-xs font-semibold text-foreground leading-tight">
                   {user.name}
                 </div>
-                <div className="text-[11px] text-zinc-500 font-mono">
-                  {user.email}
+                <div className="text-[10px] text-muted-foreground leading-tight font-mono">
+                  {user.roleTitle}
                 </div>
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold">
-                    {user.roleTitle}
+              </div>
+
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 top-11 w-64 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in-50 zoom-in-95 duration-100 text-xs">
+                <div className="px-3.5 py-2.5 border-b border-border">
+                  <div className="font-semibold text-foreground text-xs">{user.name}</div>
+                  <div className="text-[11px] text-muted-foreground font-mono">{user.email}</div>
+                  <div className="mt-1.5">
+                    <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border font-semibold">
+                      {user.roleTitle}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="py-1 border-b border-border">
+                  <Link
+                    href="/settings"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="px-3.5 py-2 flex items-center gap-2 text-foreground hover:bg-accent transition"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Studio Settings</span>
+                  </Link>
+
+                  <Link
+                    href="/"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="px-3.5 py-2 flex items-center justify-between text-foreground hover:bg-accent transition"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>Public Studio Website</span>
+                    </div>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </Link>
+                </div>
+
+                {/* Instant Role Switcher */}
+                <div className="py-2 px-3.5 border-b border-border">
+                  <span className="text-[10px] uppercase font-mono text-muted-foreground block mb-1.5">
+                    Switch Active Role
                   </span>
+                  <div className="grid grid-cols-2 gap-1 font-mono text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole("studio_admin");
+                        setIsUserMenuOpen(false);
+                        router.push("/dashboard");
+                      }}
+                      className={`p-1.5 rounded-md text-left border cursor-pointer ${
+                        role === "studio_admin"
+                          ? "bg-primary text-primary-foreground font-bold border-transparent"
+                          : "border-border hover:bg-accent text-muted-foreground"
+                      }`}
+                    >
+                      Studio Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole("architect");
+                        setIsUserMenuOpen(false);
+                        router.push("/dashboard");
+                      }}
+                      className={`p-1.5 rounded-md text-left border cursor-pointer ${
+                        role === "architect"
+                          ? "bg-primary text-primary-foreground font-bold border-transparent"
+                          : "border-border hover:bg-accent text-muted-foreground"
+                      }`}
+                    >
+                      Architect
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole("contractor");
+                        setIsUserMenuOpen(false);
+                        router.push("/orders");
+                      }}
+                      className={`p-1.5 rounded-md text-left border cursor-pointer col-span-2 ${
+                        role === "contractor"
+                          ? "bg-primary text-primary-foreground font-bold border-transparent"
+                          : "border-border hover:bg-accent text-muted-foreground"
+                      }`}
+                    >
+                      Contractor
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Master Superadmin Link (if superadmin) */}
-              <div className="py-1 border-b border-zinc-100 dark:border-zinc-900">
-                <Link
-                  href="/superadmin"
-                  onClick={() => setIsUserMenuOpen(false)}
-                  className="px-3.5 py-2 flex items-center justify-between text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 font-semibold transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <Crown className="w-3.5 h-3.5" />
-                    <span>Superadmin Portal</span>
-                  </div>
-                  <ExternalLink className="w-3 h-3 opacity-70" />
-                </Link>
 
-                <Link
-                  href="/"
-                  onClick={() => setIsUserMenuOpen(false)}
-                  className="px-3.5 py-2 flex items-center justify-between text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Public Studio Website</span>
-                  </div>
-                  <ExternalLink className="w-3 h-3 opacity-70" />
-                </Link>
-              </div>
-
-              {/* Quick Role Switcher */}
-              <div className="py-2 px-3.5 border-b border-zinc-100 dark:border-zinc-900">
-                <span className="text-[10px] uppercase font-mono text-zinc-400 block mb-1.5">
-                  Quick Switch Role
-                </span>
-                <div className="grid grid-cols-2 gap-1 font-mono text-[10px]">
+                <div className="pt-1">
                   <button
                     type="button"
                     onClick={() => {
-                      switchRole("superadmin");
                       setIsUserMenuOpen(false);
-                      router.push("/superadmin");
+                      logout();
                     }}
-                    className={`p-1 rounded text-left border ${
-                      role === "superadmin"
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
-                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                    }`}
+                    className="w-full px-3.5 py-2 flex items-center gap-2 text-destructive hover:bg-destructive/10 transition text-left cursor-pointer"
                   >
-                    Superadmin
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchRole("studio_admin");
-                      setIsUserMenuOpen(false);
-                      router.push("/dashboard");
-                    }}
-                    className={`p-1 rounded text-left border ${
-                      role === "studio_admin"
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
-                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                    }`}
-                  >
-                    Studio Admin
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchRole("architect");
-                      setIsUserMenuOpen(false);
-                      router.push("/dashboard");
-                    }}
-                    className={`p-1 rounded text-left border ${
-                      role === "architect"
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
-                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                    }`}
-                  >
-                    Architect
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchRole("client");
-                      setIsUserMenuOpen(false);
-                      router.push("/client-portal/P-619");
-                    }}
-                    className={`p-1 rounded text-left border ${
-                      role === "client"
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold border-transparent"
-                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                    }`}
-                  >
-                    Client Portal
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+      </header>
 
-              {/* Navigation Options */}
-              <div className="py-1">
-                <Link
-                  href="/settings"
-                  onClick={() => setIsUserMenuOpen(false)}
-                  className="px-3.5 py-2 flex items-center gap-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
-                >
-                  <Settings className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Studio Settings & Masters</span>
-                </Link>
+      {/* Full Shadcn Admin Command Search Dialog (Ctrl+K) */}
+      {isCommandOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity cursor-pointer"
+            onClick={() => setIsCommandOpen(false)}
+          />
+          <div className="relative w-full max-w-lg bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl z-10 overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150">
+            <div className="p-3 border-b border-border flex items-center gap-2">
+              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+              <input
+                ref={commandInputRef}
+                type="text"
+                placeholder="Type a command or search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              <button
+                onClick={() => setIsCommandOpen(false)}
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-                <Link
-                  href="/team"
-                  onClick={() => setIsUserMenuOpen(false)}
-                  className="px-3.5 py-2 flex items-center gap-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
-                >
-                  <Users className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Team Directory & Roles</span>
-                </Link>
-
-                <Link
-                  href="/timesheets"
-                  onClick={() => setIsUserMenuOpen(false)}
-                  className="px-3.5 py-2 flex items-center gap-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition"
-                >
-                  <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>My Billable Timesheets</span>
-                </Link>
+            <div className="max-h-80 overflow-y-auto p-2 space-y-3">
+              {/* Quick Navigation Links */}
+              <div>
+                <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Quick Navigation
+                </div>
+                <div className="space-y-0.5">
+                  {navigationShortcuts.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.href}
+                        onClick={() => {
+                          setIsCommandOpen(false);
+                          router.push(item.href);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs hover:bg-accent text-foreground transition text-left cursor-pointer"
+                      >
+                        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Theme Toggle within Menu */}
-              <div className="border-t border-zinc-100 dark:border-zinc-900 py-1">
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="w-full text-left px-3.5 py-2 flex items-center justify-between text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-100 transition cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    {isDark ? <Sun className="w-3.5 h-3.5 text-zinc-400" /> : <Moon className="w-3.5 h-3.5 text-zinc-400" />}
-                    <span>Theme: {isDark ? "Dark Mode" : "Light Mode"}</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-400 font-mono">Toggle</span>
-                </button>
-              </div>
-
-              {/* Sign Out */}
-              <div className="border-t border-zinc-100 dark:border-zinc-900 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    logout();
-                  }}
-                  className="w-full text-left px-3.5 py-2 flex items-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition font-medium cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-red-500" />
-                  <span>Sign out to Login Portal</span>
-                </button>
+              {/* Projects Search Results */}
+              <div>
+                <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Matching Projects ({filteredSearchProjects.length})
+                </div>
+                <div className="space-y-0.5">
+                  {filteredSearchProjects.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-muted-foreground">
+                      No matching projects found
+                    </div>
+                  ) : (
+                    filteredSearchProjects.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setIsCommandOpen(false);
+                          router.push(`/projects/${p.code}`);
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs hover:bg-accent transition text-left cursor-pointer"
+                      >
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-semibold text-foreground">
+                              {p.code}
+                            </span>
+                            <span className="font-medium text-foreground">{p.name}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">
+                            {p.clientName} • {p.city}
+                          </span>
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono uppercase bg-muted text-muted-foreground border border-border">
+                          {p.stage}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-          )}
+
+            <div className="p-2 border-t border-border bg-muted/30 px-3 flex items-center justify-between text-[11px] text-muted-foreground font-mono">
+              <span>Press ESC to close</span>
+              <span>Basekraft OS</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </header>
+      )}
+    </>
   );
 }

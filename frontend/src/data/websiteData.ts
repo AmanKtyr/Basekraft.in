@@ -256,10 +256,11 @@ export const studioFAQs: StudioFAQ[] = [
     category: "Platform",
   },
   {
-    question: "How do our clients access their private Client Portal?",
-    answer: "Every project automatically generates a private client code (e.g. /client-portal/P-619). You can share this link with your client via WhatsApp or email. Clients don't need complex passwords—they immediately see live milestone progress, approved 3D moodboards, and payment receipts.",
+    question: "How do teams collaborate on project deliverables and timeline?",
+    answer: "Every project generates a unified workspace for your architects, project managers, and contractors. Teams can track milestone progress, 3D concept deliverables, contractor purchase orders, and payment receipts from one centralized dashboard.",
     category: "Execution",
   },
+
   {
     question: "Does the platform support Indian currency (INR) and GST taxation?",
     answer: "Absolutely. The entire platform is engineered with standard Indian architectural specifications: Lakhs (L) and Crores (Cr) currency formatting, standard 18% / 12% / 5% GST itemized tax breakdown, and Indian measurement units (Sq.Ft, R.Ft, Nos, LumpSum).",

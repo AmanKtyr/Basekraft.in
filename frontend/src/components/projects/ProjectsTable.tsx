@@ -213,15 +213,9 @@ export function ProjectsTable({ projects, selectedStage, onSelectStage }: Projec
                       >
                         Workspace
                       </Link>
-                      <Link
-                        href={`/client-portal/${p.code}`}
-                        title="Client Portal Preview"
-                        className="p-1 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
                     </div>
                   </td>
+
                 </tr>
               ))}
             </tbody>

@@ -88,7 +88,7 @@ export default function ProjectWorkspacePage() {
             </div>
           </div>
 
-          {/* Right Metrics & Client Portal link */}
+          {/* Right Metrics */}
           <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 w-full lg:w-auto pt-2 lg:pt-0 border-t lg:border-t-0 border-zinc-100 dark:border-zinc-800">
             <div className="text-left sm:text-right">
               <div className="text-xs text-zinc-400 font-mono">Total Budget</div>
@@ -99,17 +99,10 @@ export default function ProjectWorkspacePage() {
                 Spent: {formatCurrency(project.spent)} ({project.progressPercent}%)
               </div>
             </div>
-
-            <Link
-              href={`/client-portal/${project.code}`}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs font-medium transition shrink-0"
-            >
-              <span>Client Portal</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
           </div>
         </div>
       </div>
+
 
       {/* Navigation Tabs (Mobile Scrollable) */}
       <div className="flex items-center gap-1 border-b border-zinc-200 dark:border-zinc-800 text-xs font-medium overflow-x-auto whitespace-nowrap">

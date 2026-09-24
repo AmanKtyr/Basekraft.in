@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,15 +15,20 @@ import {
   WalletCards,
   Users,
   Settings,
-  Sparkles,
   ExternalLink,
   Package,
   Globe,
-  Crown,
   X,
+  ChevronsUpDown,
+  Building2,
+  LogOut,
+  ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
+
 import { themeConfig } from "@/config/theme";
 import { useAuth } from "@/context/AuthContext";
+import { useSidebar } from "@/context/SidebarContext";
 
 interface NavItem {
   label: string;
@@ -39,15 +44,15 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    title: "Main Platform",
+    title: "General",
     items: [
       {
-        label: "Dashboard",
+        label: "Overview",
         href: "/dashboard",
         icon: LayoutDashboard,
       },
       {
-        label: "Projects Portfolio",
+        label: "Projects",
         href: "/projects",
         icon: FolderKanban,
         badge: "5",
@@ -59,7 +64,7 @@ const navSections: NavSection[] = [
         badge: "4",
       },
       {
-        label: "All Tasks",
+        label: "Tasks",
         href: "/tasks",
         icon: CheckSquare,
         badge: "93",
@@ -70,7 +75,7 @@ const navSections: NavSection[] = [
     title: "Execution & Commercials",
     items: [
       {
-        label: "BOQ & Quotations",
+        label: "BOQ & Quotes",
         href: "/quotes",
         icon: FileSpreadsheet,
       },
@@ -102,7 +107,7 @@ const navSections: NavSection[] = [
         icon: Package,
       },
       {
-        label: "Timesheets & Hours",
+        label: "Timesheets",
         href: "/timesheets",
         icon: Clock,
       },
@@ -127,70 +132,108 @@ interface SidebarProps {
 
 export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, role } = useAuth();
+  const { user, role, logout } = useAuth();
+  const { isCollapsed } = useSidebar();
+  const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
+
+  // If mobile, we always treat as expanded
+  const collapsed = isMobile ? false : isCollapsed;
 
   return (
     <aside
-      className={
+      className={`h-screen flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ease-in-out select-none shrink-0 ${
         isMobile
-          ? "w-full h-full flex flex-col bg-white dark:bg-zinc-950 select-none"
-          : "w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col h-screen select-none shrink-0"
-      }
+          ? "w-full"
+          : collapsed
+          ? "w-[68px]"
+          : "w-64"
+      }`}
     >
-      {/* Workspace Brand Header */}
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-        <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-zinc-950 dark:bg-zinc-100 rounded flex items-center justify-center text-white dark:text-zinc-950 font-bold text-xs tracking-wider">
-            BK
-          </div>
-          <div>
-            <span className="font-semibold tracking-tight text-sm text-zinc-900 dark:text-zinc-100 block leading-tight">
-              {themeConfig.brand.name}
-            </span>
-            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono block">
-              Architectural OS
-            </span>
-          </div>
-        </Link>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] uppercase font-mono tracking-widest px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-            {role === "superadmin" ? "SUPERADMIN" : "PRO"}
-          </span>
-          {isMobile && (
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+      {/* Workspace / Organization Switcher Header */}
+      <div className="p-3 border-b border-sidebar-border">
+        {collapsed ? (
+          <div className="flex flex-col items-center justify-center py-1">
+            <Link
+              href="/dashboard"
+              title={`${themeConfig.brand.name} Studio`}
+              className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs tracking-wider shadow-xs hover:opacity-90 transition"
             >
-              <X className="w-4 h-4" />
+              BK
+            </Link>
+          </div>
+        ) : (
+          <div className="relative">
+            <button
+              onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
+              className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-sidebar-accent transition text-left group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs tracking-wider shrink-0 shadow-xs">
+                  BK
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-xs text-sidebar-foreground truncate block">
+                      {themeConfig.brand.name} Studio
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground truncate block font-mono">
+                    Studio Practice OS
+                  </span>
+                </div>
+              </div>
+              <ChevronsUpDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 group-hover:text-sidebar-foreground transition" />
             </button>
-          )}
-        </div>
+
+            {isMobile && (
+              <button
+                onClick={onClose}
+                className="absolute right-1 top-2.5 p-1 rounded-md text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition cursor-pointer"
+                aria-label="Close navigation"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Quick Workspace Switcher Menu */}
+            {isWorkspaceDropdownOpen && !collapsed && (
+              <div className="absolute top-12 left-0 right-0 z-50 bg-popover border border-border rounded-lg shadow-lg p-1.5 animate-in fade-in-50 zoom-in-95 duration-100">
+                <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Active Workspaces
+                </div>
+                <div className="p-2 rounded-md bg-accent/60 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-primary" />
+                    <span className="font-medium text-popover-foreground">Basekraft Gurugram</span>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground font-mono">Current</span>
+                </div>
+                <div className="p-2 rounded-md hover:bg-accent/40 flex items-center justify-between text-xs text-muted-foreground transition cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Atelier Nine Dubai</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-mono">Studio</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Superadmin Quick Access Banner */}
-      {role === "superadmin" && (
-        <div className="px-3 py-2 bg-amber-500/10 border-b border-amber-500/20">
-          <Link
-            href="/superadmin"
-            onClick={onClose}
-            className="flex items-center justify-between p-1.5 rounded text-xs font-semibold text-amber-500 hover:bg-amber-500/20 transition"
-          >
-            <div className="flex items-center gap-2">
-              <Crown className="w-3.5 h-3.5" />
-              <span>Superadmin Portal</span>
-            </div>
-            <ExternalLink className="w-3 h-3 opacity-70" />
-          </Link>
-        </div>
-      )}
+      {/* Navigation Sections */}
 
-      {/* Main Direct Navigation - Clean & 100% Clickable */}
-      <nav className="flex-1 px-3 space-y-4 overflow-y-auto pt-1">
-        {navSections.map((section) => (
+      <nav className="flex-1 px-2.5 py-3 space-y-4 overflow-y-auto overflow-x-hidden">
+        {navSections.map((section, idx) => (
           <div key={section.title} className="space-y-1">
-            <p className="px-2.5 text-[10px] font-medium tracking-wider uppercase text-zinc-400 dark:text-zinc-500">
-              {section.title}
-            </p>
+            {!collapsed ? (
+              <p className="px-2.5 text-[11px] font-medium tracking-wider uppercase text-muted-foreground">
+                {section.title}
+              </p>
+            ) : idx > 0 ? (
+              <div className="h-px bg-sidebar-border mx-2 my-2" />
+            ) : null}
+
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const Icon = item.icon;
@@ -204,33 +247,42 @@ export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
                     key={item.href}
                     href={item.href}
                     onClick={onClose}
-                    className={`flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-medium transition-colors ${
+                    title={collapsed ? item.label : undefined}
+                    className={`group flex items-center rounded-lg text-xs font-medium transition-all ${
+                      collapsed
+                        ? "justify-center p-2.5 relative"
+                        : "justify-between px-2.5 py-2"
+                    } ${
                       isActive
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-xs"
-                        : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-900"
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-xs"
+                        : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 truncate">
+                    <div className={`flex items-center min-w-0 ${collapsed ? "justify-center" : "gap-2.5"}`}>
                       <Icon
-                        className={`w-4 h-4 shrink-0 ${
+                        className={`w-4 h-4 shrink-0 transition-colors ${
                           isActive
-                            ? "text-white dark:text-zinc-950"
-                            : "text-zinc-400 group-hover:text-zinc-700 dark:text-zinc-500"
+                            ? "text-sidebar-foreground"
+                            : "text-muted-foreground group-hover:text-sidebar-foreground"
                         }`}
                       />
-                      <span className="truncate">{item.label}</span>
+                      {!collapsed && <span className="truncate">{item.label}</span>}
                     </div>
 
-                    {item.badge && (
+                    {!collapsed && item.badge && (
                       <span
-                        className={`text-[10px] font-mono px-1.5 py-0.2 rounded shrink-0 ${
+                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md shrink-0 border ${
                           isActive
-                            ? "bg-zinc-800 text-zinc-200 dark:bg-zinc-200 dark:text-zinc-800"
-                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
+                            ? "bg-background text-foreground border-sidebar-border"
+                            : "bg-sidebar-accent text-muted-foreground border-sidebar-border"
                         }`}
                       >
                         {item.badge}
                       </span>
+                    )}
+
+                    {collapsed && item.badge && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
                     )}
                   </Link>
                 );
@@ -240,30 +292,60 @@ export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Client Portal & Public Studio Website Links */}
-      <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 space-y-1.5">
-        <Link
-          href="/client-portal/P-619"
-          onClick={onClose}
-          className="flex items-center justify-between p-2 rounded-md bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-800 text-xs transition"
-        >
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">Client Portal</span>
+      {/* Quick External Links (Public Web) */}
+      {!collapsed && (
+        <div className="p-2.5 border-t border-sidebar-border space-y-1.5">
+          <Link
+            href="/"
+            onClick={onClose}
+            className="flex items-center justify-between p-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 text-xs transition shadow-xs"
+          >
+            <div className="flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5" />
+              <span className="font-medium">Public Studio Web</span>
+            </div>
+            <ExternalLink className="w-3 h-3 opacity-70" />
+          </Link>
+        </div>
+      )}
+
+
+      {/* User Profile Card at Sidebar Bottom */}
+      <div className="p-2 border-t border-sidebar-border bg-sidebar">
+        {collapsed ? (
+          <div className="flex justify-center py-1">
+            <Link
+              href="/settings"
+              title={`${user.name} (${user.roleTitle})`}
+              className="w-9 h-9 rounded-full bg-primary/10 border border-border text-foreground flex items-center justify-center font-bold text-xs hover:ring-2 hover:ring-ring transition"
+            >
+              {user.avatar || user.name.slice(0, 2).toUpperCase()}
+            </Link>
           </div>
-          <ExternalLink className="w-3 h-3 text-zinc-400" />
-        </Link>
-        <Link
-          href="/"
-          onClick={onClose}
-          className="flex items-center justify-between p-2 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 text-xs transition shadow-xs"
-        >
-          <div className="flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5" />
-            <span className="font-medium">Public Studio Web</span>
+        ) : (
+          <div className="flex items-center justify-between p-2 rounded-lg hover:bg-sidebar-accent transition">
+            <Link href="/settings" onClick={onClose} className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="w-8 h-8 rounded-full bg-primary/10 border border-border text-foreground flex items-center justify-center font-bold text-xs shrink-0">
+                {user.avatar || user.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-sidebar-foreground truncate leading-tight">
+                  {user.name}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate font-mono">
+                  {user.email}
+                </p>
+              </div>
+            </Link>
+            <button
+              onClick={logout}
+              title="Sign Out"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-          <ExternalLink className="w-3 h-3 opacity-70" />
-        </Link>
+        )}
       </div>
     </aside>
   );

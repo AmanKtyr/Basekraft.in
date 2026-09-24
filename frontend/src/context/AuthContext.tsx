@@ -4,11 +4,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export type UserRole =
-  | "superadmin"
   | "studio_admin"
   | "architect"
-  | "contractor"
-  | "client";
+  | "contractor";
 
 export interface UserProfile {
   id: string;
@@ -23,16 +21,6 @@ export interface UserProfile {
 }
 
 export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
-  superadmin: {
-    id: "usr_superadmin",
-    name: "Vikram Malhotra",
-    email: "superadmin@basekraft.in",
-    role: "superadmin",
-    roleTitle: "Global Platform Superadmin",
-    studioName: "Basekraft Cloud HQ",
-    avatar: "VM",
-    tenantId: "tenant_hq_master",
-  },
   studio_admin: {
     id: "usr_studio_admin",
     name: "Aman Tyagi",
@@ -53,17 +41,6 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     avatar: "RS",
     tenantId: "tenant_bk_01",
     assignedProjectCode: "P-101",
-  },
-  client: {
-    id: "usr_client",
-    name: "Rajesh Mittal",
-    email: "client@mittalholdings.com",
-    role: "client",
-    roleTitle: "Property Owner / Client",
-    studioName: "Mittal Luxury Villa",
-    avatar: "RM",
-    tenantId: "tenant_bk_01",
-    assignedProjectCode: "P-619",
   },
   contractor: {
     id: "usr_contractor",
@@ -130,11 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const profile = DEMO_PROFILES[matchedRole];
     persistUser(profile);
 
-    if (matchedRole === "superadmin") {
-      router.push("/superadmin");
-    } else if (matchedRole === "client") {
-      router.push("/client-portal/P-619");
-    } else if (matchedRole === "contractor") {
+    if (matchedRole === "contractor") {
       router.push("/orders");
     } else {
       router.push("/dashboard");
@@ -145,16 +118,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const profile = DEMO_PROFILES[role];
     persistUser(profile);
 
-    if (role === "superadmin") {
-      router.push("/superadmin");
-    } else if (role === "client") {
-      router.push("/client-portal/P-619");
-    } else if (role === "contractor") {
+    if (role === "contractor") {
       router.push("/orders");
     } else {
       router.push("/dashboard");
     }
   };
+
 
   const switchRole = (newRole: UserRole) => {
     const profile = DEMO_PROFILES[newRole];

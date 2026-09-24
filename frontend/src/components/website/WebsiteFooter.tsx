@@ -79,13 +79,7 @@ export function WebsiteFooter() {
             <ul className="space-y-2 text-xs text-zinc-400">
               <li>
                 <Link href="/login" className="hover:text-white transition">
-                  Studio OS Multi-Login
-                </Link>
-              </li>
-              <li>
-                <Link href="/client-portal/P-619" target="_blank" className="hover:text-white transition inline-flex items-center gap-1">
-                  <span>Client Live Portal</span>
-                  <ArrowUpRight className="w-2.5 h-2.5 text-zinc-400" />
+                  Studio OS Workspace Login
                 </Link>
               </li>
               <li>
@@ -93,6 +87,7 @@ export function WebsiteFooter() {
                   Book Practice Discovery
                 </Link>
               </li>
+
               <li>
                 <Link href="/pricing" className="hover:text-white transition">
                   Commercial Studio Tiers

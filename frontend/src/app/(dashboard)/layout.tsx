@@ -5,8 +5,9 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { NewProjectModal } from "@/components/projects/NewProjectModal";
 import { Project } from "@/types";
+import { SidebarProvider } from "@/context/SidebarContext";
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -15,18 +16,17 @@ export default function DashboardLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleAddProject = (project: Project) => {
-    // In our client-side demo state or via API
     console.log("New project created:", project);
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       {/* Desktop Sidebar (visible on lg+) */}
       <div className="hidden lg:flex shrink-0">
         <Sidebar />
       </div>
 
-      {/* Mobile Drawer Overlay and Panel (visible when open on mobile/tablet) */}
+      {/* Mobile Drawer Overlay and Panel */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
@@ -34,7 +34,7 @@ export default function DashboardLayout({
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close mobile menu overlay"
           />
-          <div className="relative w-72 max-w-[85vw] h-full bg-white dark:bg-zinc-950 shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative w-72 max-w-[85vw] h-full bg-sidebar shadow-2xl z-10 animate-in slide-in-from-left duration-200">
             <Sidebar isMobile onClose={() => setIsMobileMenuOpen(false)} />
           </div>
         </div>
@@ -46,7 +46,7 @@ export default function DashboardLayout({
           onOpenNewProject={() => setIsNewProjectModalOpen(true)}
           onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-8 bg-zinc-50/40 dark:bg-zinc-950">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-muted/30">
           {children}
         </main>
       </div>
@@ -58,5 +58,17 @@ export default function DashboardLayout({
         onAddProject={handleAddProject}
       />
     </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <SidebarProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </SidebarProvider>
   );
 }

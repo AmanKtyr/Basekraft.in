@@ -806,18 +806,18 @@ export default function CRMPage() {
                       )}
                     </td>
 
-                    {/* Launch Live Client Portal Link */}
+                    {/* Project Workspace Link */}
                     <td className="py-3 px-4 text-right">
                       {client.portalCode ? (
                         <Link
-                          href={`/client-portal/${client.portalCode}`}
-                          target="_blank"
+                          href={`/projects/${client.portalCode}`}
                           className="inline-flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-[11px] font-medium px-2.5 py-1 rounded transition"
                         >
-                          <span>Open Portal</span>
-                          <ExternalLink className="w-3 h-3" />
+                          <span>View Project</span>
+                          <ArrowRight className="w-3 h-3" />
                         </Link>
                       ) : (
+
                         <button
                           onClick={() => {
                             // Find corresponding lead or prompt to convert
@@ -1241,8 +1241,9 @@ export default function CRMPage() {
               </div>
 
               <p className="text-[11px] text-zinc-500 leading-relaxed">
-                Converting will mark this lead as <strong>Contract Won</strong>, activate their client account, and generate live <strong>Client Portal credentials</strong> (`/client-portal/${convertForm.projectCode}`).
+                Converting will mark this lead as <strong>Contract Won</strong> and initialize their dedicated project workspace (`/projects/${convertForm.projectCode}`).
               </p>
+
 
               <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-end gap-2.5">
                 <button

@@ -72,17 +72,8 @@ export function WebsiteNavbar({
           })}
         </nav>
 
-        {/* Dual Actions: Client Portal + Studio OS Button - Strictly single-line, non-wrapping */}
+        {/* Studio OS Action Button - Strictly single-line, non-wrapping */}
         <div className="hidden lg:flex items-center gap-3 xl:gap-4 shrink-0 whitespace-nowrap">
-          <Link
-            href="/client-portal/P-619"
-            target="_blank"
-            className="text-xs xl:text-sm font-medium text-zinc-300 hover:text-white transition flex items-center gap-1.5 px-2 py-1.5 whitespace-nowrap shrink-0"
-          >
-            <span className="whitespace-nowrap">Client Portal</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-          </Link>
-
           <Link
             href="/login"
             className="hero-button-gradient py-2 xl:py-2.5 px-4 xl:px-5 rounded-full text-xs xl:text-sm font-semibold text-white transition-all duration-200 hover:opacity-85 shadow-[0_4px_20px_rgba(110,37,237,0.45)] flex items-center gap-2 whitespace-nowrap shrink-0"
@@ -131,15 +122,7 @@ export function WebsiteNavbar({
           </nav>
 
           <div className="pt-4 border-t border-white/[0.08] flex flex-col gap-3">
-            <Link
-              href="/client-portal/P-619"
-              target="_blank"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="button-border-gradient w-full text-center px-4 py-3 text-xs font-semibold rounded-xl text-zinc-200 hover:text-white flex items-center justify-center gap-2 whitespace-nowrap"
-            >
-              <span className="whitespace-nowrap">Preview Live Client Portal</span>
-              <ExternalLink className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-            </Link>
+
             <Link
               href="/login"
               onClick={() => setIsMobileMenuOpen(false)}
