@@ -72,13 +72,13 @@ export function WebsiteNavbar({
           })}
         </nav>
 
-        {/* Studio OS Action Button - Strictly single-line, non-wrapping */}
+        {/* Login Action Button - Strictly single-line, non-wrapping */}
         <div className="hidden lg:flex items-center gap-3 xl:gap-4 shrink-0 whitespace-nowrap">
           <Link
             href="/login"
             className="hero-button-gradient py-2 xl:py-2.5 px-4 xl:px-5 rounded-full text-xs xl:text-sm font-semibold text-white transition-all duration-200 hover:opacity-85 shadow-[0_4px_20px_rgba(110,37,237,0.45)] flex items-center gap-2 whitespace-nowrap shrink-0"
           >
-            <span className="whitespace-nowrap">Studio OS</span>
+            <span className="whitespace-nowrap">Login</span>
             <ArrowRight className="w-3.5 h-3.5 xl:w-4 xl:h-4 shrink-0" />
           </Link>
         </div>
@@ -129,7 +129,7 @@ export function WebsiteNavbar({
               className="hero-button-gradient w-full text-center px-4 py-3 text-xs font-bold text-white rounded-xl flex items-center justify-center gap-2 uppercase tracking-wider shadow-lg whitespace-nowrap"
             >
               <LogIn className="w-4 h-4 shrink-0" />
-              <span className="whitespace-nowrap">Launch Studio OS Platform</span>
+              <span className="whitespace-nowrap">Login</span>
               <ArrowRight className="w-4 h-4 shrink-0" />
             </Link>
           </div>
