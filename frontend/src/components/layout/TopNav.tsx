@@ -97,7 +97,7 @@ const navigationShortcuts = [
 
 export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
   const router = useRouter();
-  const { user, role, switchRole, logout } = useAuth();
+  const { user, logout } = useAuth();
   const { resolvedTheme, toggleTheme } = useTheme();
   const { toggleSidebar, isCollapsed } = useSidebar();
 
@@ -204,18 +204,9 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
           </button>
         </div>
 
-        {/* Right Controls Area: Actions, Notifications, Theme, & User Profile */}
+        {/* Right Controls Area: Theme Toggle, Notifications & User Profile */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Primary Action Button: New Project */}
-          <button
-            onClick={onOpenNewProject}
-            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-primary-foreground px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium transition shadow-xs cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Project</span>
-          </button>
-
-          {/* Theme Toggle Button (shadcn-admin style) */}
+          {/* Theme Toggle Button */}
 
           <button
             onClick={toggleTheme}
@@ -365,6 +356,15 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
                   </Link>
 
                   <Link
+                    href="/team"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="px-3.5 py-2 flex items-center gap-2 text-foreground hover:bg-accent transition"
+                  >
+                    <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Team Directory</span>
+                  </Link>
+
+                  <Link
                     href="/"
                     onClick={() => setIsUserMenuOpen(false)}
                     className="px-3.5 py-2 flex items-center justify-between text-foreground hover:bg-accent transition"
@@ -376,61 +376,6 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
                     <ExternalLink className="w-3 h-3 opacity-70" />
                   </Link>
                 </div>
-
-                {/* Instant Role Switcher */}
-                <div className="py-2 px-3.5 border-b border-border">
-                  <span className="text-[10px] uppercase font-mono text-muted-foreground block mb-1.5">
-                    Switch Active Role
-                  </span>
-                  <div className="grid grid-cols-2 gap-1 font-mono text-[10px]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole("studio_admin");
-                        setIsUserMenuOpen(false);
-                        router.push("/dashboard");
-                      }}
-                      className={`p-1.5 rounded-md text-left border cursor-pointer ${
-                        role === "studio_admin"
-                          ? "bg-primary text-primary-foreground font-bold border-transparent"
-                          : "border-border hover:bg-accent text-muted-foreground"
-                      }`}
-                    >
-                      Studio Admin
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole("architect");
-                        setIsUserMenuOpen(false);
-                        router.push("/dashboard");
-                      }}
-                      className={`p-1.5 rounded-md text-left border cursor-pointer ${
-                        role === "architect"
-                          ? "bg-primary text-primary-foreground font-bold border-transparent"
-                          : "border-border hover:bg-accent text-muted-foreground"
-                      }`}
-                    >
-                      Architect
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole("contractor");
-                        setIsUserMenuOpen(false);
-                        router.push("/orders");
-                      }}
-                      className={`p-1.5 rounded-md text-left border cursor-pointer col-span-2 ${
-                        role === "contractor"
-                          ? "bg-primary text-primary-foreground font-bold border-transparent"
-                          : "border-border hover:bg-accent text-muted-foreground"
-                      }`}
-                    >
-                      Contractor
-                    </button>
-                  </div>
-                </div>
-
 
                 <div className="pt-1">
                   <button
