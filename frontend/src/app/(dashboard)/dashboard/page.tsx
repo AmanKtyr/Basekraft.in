@@ -35,8 +35,8 @@ import {
 } from "@/utils/api";
 
 export default function DashboardOverview() {
-  const { user, role, industry, setIndustry } = useAuth();
-  const currentIndustry = user?.industry || industry || "INTERIOR_DESIGN";
+  const { user } = useAuth();
+  const currentIndustry: IndustryType = user?.industry || "INTERIOR_DESIGN";
   const [stats, setStats] = useState<DashboardStatsData | null>(null);
 
   useEffect(() => {
@@ -122,40 +122,33 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Interactive Sector Switcher Bar */}
+      {/* Enterprise Industry Scope Banner (Read-only, assigned by Superadmin) */}
       <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-primary shrink-0" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+              {getIndustryIcon(currentIndustry)}
+            </div>
             <div>
-              <p className="text-xs font-semibold text-foreground">
-                Company Business Sector:
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                Assigned by Superadmin during company onboarding. Switch below to preview how file vaults adapt:
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-semibold text-foreground">
+                  Enterprise Industry Domain: {currentIndustryMeta.label}
+                </p>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">
+                  Provisioned by Superadmin
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {currentIndustryMeta.description}. All document vaults, BOQ formats, and project pipelines are locked to this organization domain.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
-            {INDUSTRY_OPTIONS.map((ind) => {
-              const isSelected = currentIndustry === ind.key;
-              return (
-                <button
-                  key={ind.key}
-                  type="button"
-                  onClick={() => setIndustry(ind.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0 ${
-                    isSelected
-                      ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
-                  }`}
-                >
-                  {getIndustryIcon(ind.key)}
-                  <span className="truncate">{ind.badge}</span>
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+            <div className="px-3 py-1.5 rounded-lg bg-muted text-foreground border border-border text-xs font-mono font-medium flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Tenant Domain Active</span>
+            </div>
           </div>
         </div>
       </div>

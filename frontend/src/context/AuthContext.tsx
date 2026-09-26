@@ -155,7 +155,6 @@ interface AuthContextType {
   quickLogin: (role: UserRole) => Promise<boolean>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
-  setIndustry: (industry: IndustryType) => void;
   refreshProfile: () => Promise<void>;
 }
 
@@ -206,27 +205,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = getAuthToken();
-    const saved = typeof window !== "undefined" ? localStorage.getItem("basekraft_auth_user") : null;
-
-    // Optimistically restore cached profile if token is present
-    if (token && saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed?.id && parsed?.email) {
-          setUser(parsed);
-        }
-      } catch {
-        // ignore parse error
-      }
-    }
 
     if (!token) {
+      clearAuthTokens();
       setUser(null);
       setIsLoading(false);
       return;
     }
 
-    // Validate token against backend /auth/me/
+    // Must verify with backend live before considering user logged in
     authApi
       .getMe()
       .then((apiUser) => {
@@ -234,7 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         persistUser(profile);
       })
       .catch((err) => {
-        console.warn("Session verification failed:", err);
+        console.warn("Backend unavailable or session expired:", err);
         clearAuthTokens();
         setUser(null);
       })
@@ -290,22 +277,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigateByRole(newRole);
   };
 
-  const setIndustry = (newIndustry: IndustryType) => {
-    if (!user) return;
-    const industryLabels: Record<IndustryType, string> = {
-      INTERIOR_DESIGN: "Interior Design & Turnkey Fit-out",
-      SOLAR_EPC: "Solar Energy & Rooftop EPC",
-      MODULAR_FURNITURE: "Modular Furniture & Manufacturing",
-      CIVIL_CONSTRUCTION: "Real Estate & Civil Construction",
-    };
-    const updated = {
-      ...user,
-      industry: newIndustry,
-      industryDisplay: industryLabels[newIndustry],
-    };
-    persistUser(updated);
-  };
-
   const logout = () => {
     clearAuthTokens();
     setUser(null);
@@ -327,7 +298,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         quickLogin,
         logout,
         switchRole,
-        setIndustry,
         refreshProfile,
       }}
     >

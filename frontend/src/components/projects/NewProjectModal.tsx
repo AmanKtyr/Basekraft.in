@@ -1,14 +1,28 @@
 "use client";
 
 import React, { useState, useId } from "react";
-import { X, Building2, MapPin, IndianRupee, Calendar, User, Phone, Check, Sun, Factory, Home, Layers } from "lucide-react";
+import { X, Building2, MapPin, IndianRupee, Calendar, User, Phone, Check, Sun, Factory, Home, Layers, ShieldCheck } from "lucide-react";
 import { Project, ProjectStage, ProjectSector } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddProject: (project: Project) => void;
 }
+
+const mapIndustryToSector = (ind?: string): ProjectSector => {
+  switch (ind) {
+    case "SOLAR_EPC":
+      return "Solar Energy & Rooftop EPC";
+    case "MODULAR_FURNITURE":
+      return "Modular Furniture & Manufacturing";
+    case "CIVIL_CONSTRUCTION":
+      return "Real Estate & Civil Contracting";
+    default:
+      return "Interior Design & Turnkey";
+  }
+};
 
 const sectorOptions: {
   id: ProjectSector;
@@ -87,7 +101,10 @@ const sectorOptions: {
 ];
 
 export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectModalProps) {
-  const [sector, setSector] = useState<ProjectSector>("Interior Design & Turnkey");
+  const { user } = useAuth();
+  const companySector = mapIndustryToSector(user?.industry);
+
+  const [sector, setSector] = useState<ProjectSector>(companySector);
   const [name, setName] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
@@ -99,16 +116,18 @@ export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectMod
   const [pmName, setPmName] = useState("Rohan Malhotra");
   const [designerName, setDesignerName] = useState("Ananya Deshmukh");
 
+  // Keep sector synced with company's provisioned industry
+  React.useEffect(() => {
+    const sec = mapIndustryToSector(user?.industry);
+    setSector(sec);
+    const config = sectorOptions.find((s) => s.id === sec) || sectorOptions[0];
+    setSubType(config.subTypes[0]);
+  }, [user?.industry]);
+
   const currentSectorConfig = sectorOptions.find((s) => s.id === sector) || sectorOptions[0];
   const [subType, setSubType] = useState(currentSectorConfig.subTypes[0]);
 
   if (!isOpen) return null;
-
-  const handleSectorChange = (newSector: ProjectSector) => {
-    setSector(newSector);
-    const config = sectorOptions.find((s) => s.id === newSector) || sectorOptions[0];
-    setSubType(config.subTypes[0]);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,23 +194,41 @@ export function NewProjectModal({ isOpen, onClose, onAddProject }: NewProjectMod
 
         {/* Modal Body Form */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
-          {/* Business Sector Selection */}
+          {/* Business Sector & Domain (Provisioned by Superadmin) */}
           <div className="space-y-1.5">
-            <label className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Business Sector & Industry *</span>
-            </label>
-            <select
-              value={sector}
-              onChange={(e) => handleSectorChange(e.target.value as ProjectSector)}
-              className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md px-3 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-            >
-              {sectorOptions.map((sec) => (
-                <option key={sec.id} value={sec.id}>
-                  {sec.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 text-xs">
+                <Layers className="w-3.5 h-3.5 text-primary" />
+                <span>Operating Business Sector</span>
+              </label>
+              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> Auto-Configured by Superadmin
+              </span>
+            </div>
+            <div className="p-3 rounded-lg border border-border bg-muted/40 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-md bg-primary/10 text-primary shrink-0">
+                  {sector === "Solar Energy & Rooftop EPC" ? (
+                    <Sun className="w-4 h-4 text-amber-500" />
+                  ) : sector === "Modular Furniture & Manufacturing" ? (
+                    <Factory className="w-4 h-4 text-purple-500" />
+                  ) : sector === "Real Estate & Civil Contracting" ? (
+                    <Building2 className="w-4 h-4 text-blue-500" />
+                  ) : (
+                    <Home className="w-4 h-4 text-emerald-500" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">{currentSectorConfig.label}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">
+                    Tenant Studio: {user?.studioName || "Basekraft Enterprise"}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted border border-border text-muted-foreground font-semibold">
+                LOCKED
+              </span>
+            </div>
           </div>
 
           {/* Project Title */}
