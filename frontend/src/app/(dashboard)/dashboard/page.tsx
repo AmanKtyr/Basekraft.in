@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -8,21 +8,20 @@ import {
   Clock,
   IndianRupee,
   ArrowUpRight,
-  ShieldAlert,
+  ShieldCheck,
   CheckCircle2,
-  FileText,
-  Sparkles,
-  ArrowRight,
-  Globe,
-  Building2,
   FileSpreadsheet,
   Download,
-  Eye,
-  FileCode,
+  Plus,
+  Search,
+  Building2,
+  ChevronRight,
+  Calendar,
   Layers,
-  Sun,
-  Hammer,
-  HardHat,
+  ArrowRight,
+  FileText,
+  CreditCard,
+  Users,
 } from "lucide-react";
 import { initialProjects, mockPaymentRequests } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
@@ -33,20 +32,83 @@ import {
   operationsApi,
   DashboardStatsData,
 } from "@/utils/api";
+import { Project } from "@/types";
+import { NewProjectModal } from "@/components/projects/NewProjectModal";
 
 export default function DashboardOverview() {
   const { user } = useAuth();
   const currentIndustry: IndustryType = user?.industry || "INTERIOR_DESIGN";
   const [stats, setStats] = useState<DashboardStatsData | null>(null);
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
 
   useEffect(() => {
-    operationsApi.getDashboardStats().then((data) => {
-      if (data) setStats(data);
-    }).catch((err) => console.warn("Live dashboard stats fetch:", err));
+    operationsApi
+      .getDashboardStats()
+      .then((data) => {
+        if (data) setStats(data);
+      })
+      .catch((err) => console.warn("Live dashboard stats fetch:", err));
+
+    operationsApi.projects
+      .list()
+      .then((backendProjects) => {
+        if (backendProjects && backendProjects.length > 0) {
+          const mapped: Project[] = backendProjects.map((bp) => ({
+            id: bp.id,
+            code: bp.code,
+            name: bp.name,
+            clientName: bp.client_name,
+            clientPhone: bp.client_phone || "+91 98111 00000",
+            clientEmail: bp.client_email || `${bp.client_name.toLowerCase().replace(/\s+/g, "")}@client.com`,
+            city: bp.city || "Gurugram",
+            state: "Haryana",
+            sector: "Interior Design & Turnkey",
+            stage: (bp.stage === "PLANNING"
+              ? "sales"
+              : bp.stage === "DESIGN"
+              ? "design"
+              : bp.stage === "EXECUTION"
+              ? "execution"
+              : bp.stage === "HANDOVER"
+              ? "handover"
+              : "execution"),
+            subStage: bp.stage_display || "Active Fitout",
+            budget: Number(bp.budget) || 25000000,
+            spent: Number(bp.spent) || 12000000,
+            startDate: bp.start_date || "2026-07-01",
+            targetHandover: bp.target_handover || "2026-12-31",
+            pmName: bp.assigned_lead_name || "Aman Sharma",
+            designerName: "Riya Kapoor",
+            progressPercent: bp.progress_pct || 45,
+            totalCheckpoints: 12,
+            completedCheckpoints: Math.round(((bp.progress_pct || 45) / 100) * 12),
+            pendingApprovalsCount: 2,
+            pendingIssuesCount: 1,
+            description: `Turnkey project for ${bp.client_name}`,
+            propertyType: "Luxury Villa",
+            carpetAreaSqFt: 3500,
+            checkpoints: [],
+          }));
+
+          setProjects((prev) => {
+            const codes = new Set(prev.map((p) => p.code));
+            const novel = mapped.filter((m) => !codes.has(m.code));
+            return [...novel, ...prev];
+          });
+        }
+      })
+      .catch((err) => console.warn("Live projects fetch:", err));
   }, []);
 
-  const totalValue = stats?.projects.total_budget || initialProjects.reduce((acc, p) => acc + p.budget, 0);
-  const totalSpent = stats?.projects.total_spent || initialProjects.reduce((acc, p) => acc + p.spent, 0);
+  const totalValue =
+    stats?.projects.total_budget ||
+    projects.reduce((acc, p) => acc + (Number(p.budget) || 0), 0);
+  const totalSpent =
+    stats?.projects.total_spent ||
+    projects.reduce((acc, p) => acc + (Number(p.spent) || 0), 0);
+  const spentRatio = totalValue > 0 ? Math.round((totalSpent / totalValue) * 100) : 0;
 
   const formatCurrency = (val: number) => {
     if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
@@ -54,318 +116,180 @@ export default function DashboardOverview() {
     return `₹${val.toLocaleString("en-IN")}`;
   };
 
-  // Dynamic files for this company's selected industry
-  const currentFiles = INDUSTRY_DOCUMENTS[currentIndustry] || INDUSTRY_DOCUMENTS.INTERIOR_DESIGN;
+  const currentFiles =
+    INDUSTRY_DOCUMENTS[currentIndustry] || INDUSTRY_DOCUMENTS.INTERIOR_DESIGN;
   const currentIndustryMeta =
     INDUSTRY_OPTIONS.find((i) => i.key === currentIndustry) || INDUSTRY_OPTIONS[0];
 
-  const getIndustryIcon = (ind: IndustryType) => {
-    switch (ind) {
-      case "SOLAR_EPC":
-        return <Sun className="w-4 h-4 text-amber-500" />;
-      case "MODULAR_FURNITURE":
-        return <Hammer className="w-4 h-4 text-purple-500" />;
-      case "CIVIL_CONSTRUCTION":
-        return <HardHat className="w-4 h-4 text-blue-500" />;
-      default:
-        return <Building2 className="w-4 h-4 text-emerald-500" />;
-    }
-  };
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) return projects.slice(0, 5);
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.clientName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [projects, searchQuery]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Enterprise Header & Role / Industry Indicator */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      {/* ============================================================== */}
+      {/* 1. CLEAN, MINIMAL HEADER                                       */}
+      {/* ============================================================== */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold">
-              {user?.roleTitle || "Company Lead"}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono text-muted-foreground">
+              {user?.studioName || "Basekraft Studio"}
             </span>
-            <span className="text-xs text-muted-foreground font-mono">
-              • {user?.studioName || "Basekraft Enterprise"}
-            </span>
-            {(user?.orgCode || stats?.company?.org_code) && (
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                Org ID: {user?.orgCode || stats?.company?.org_code}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              {getIndustryIcon(currentIndustry)}
-              <span>{currentIndustryMeta.label}</span>
+            <span className="text-xs text-muted-foreground">•</span>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              {currentIndustryMeta.label}
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            Enterprise Operations Dashboard
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Good evening, {user?.name?.split(" ")[0] || "Director"}
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Operational pipeline, milestone approvals, and technical deliverables tailored for{" "}
-            <strong className="text-foreground">{currentIndustryMeta.label}</strong>.
+            Operational overview of active sites, financials, and project deliverables.
           </p>
         </div>
 
-
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Link
-            href="/"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-foreground text-xs font-medium hover:bg-accent transition"
+            href="/quotes"
+            className="px-3.5 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium hover:bg-accent transition"
           >
-            <Globe className="w-3.5 h-3.5" />
-            <span>Public Website</span>
+            BOQ Builder
           </Link>
-          <Link
-            href="/projects"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition shadow-xs"
+          <button
+            onClick={() => setIsNewProjectModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition shadow-xs cursor-pointer"
           >
-            <span>View All Projects</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Project</span>
+          </button>
         </div>
       </div>
 
-      {/* Enterprise Industry Scope Banner (Read-only, assigned by Superadmin) */}
-      <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
-              {getIndustryIcon(currentIndustry)}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-xs font-semibold text-foreground">
-                  Enterprise Industry Domain: {currentIndustryMeta.label}
-                </p>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">
-                  Provisioned by Superadmin
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {currentIndustryMeta.description}. All document vaults, BOQ formats, and project pipelines are locked to this organization domain.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-            <div className="px-3 py-1.5 rounded-lg bg-muted text-foreground border border-border text-xs font-mono font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Tenant Domain Active</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Cards Grid */}
+      {/* ============================================================== */}
+      {/* 2. CRISP KPI METRICS (4 CARDS)                                 */}
+      {/* ============================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Active Turnkey / Contract Pipeline */}
-        <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">Contract Portfolio</span>
-            <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-semibold">
-              Active
+        {/* Card 1 */}
+        <div className="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+            <span>Portfolio Value</span>
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
+              +14% YoY
             </span>
           </div>
-          <div className="mt-2 text-xl font-bold font-mono text-foreground">
+          <div className="mt-2 text-2xl font-bold font-mono tracking-tight text-foreground">
             {formatCurrency(totalValue)}
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-            <span>Committed: {formatCurrency(totalSpent)}</span>
-            <span className="text-muted-foreground/80">({Math.round((totalSpent / totalValue) * 100)}%)</span>
-          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground font-mono">
+            Committed: {formatCurrency(totalSpent)} ({spentRatio}%)
+          </p>
         </div>
 
-        {/* Card 2: Active Sites & Projects */}
-        <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">Active Sites & Units</span>
+        {/* Card 2 */}
+        <div className="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+            <span>Active Sites</span>
             <FolderKanban className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
-          <div className="mt-2 text-xl font-bold text-foreground">
-            5 Sites
+          <div className="mt-2 text-2xl font-bold text-foreground">
+            {projects.length} Projects
           </div>
-          <div className="mt-1 text-[11px] text-muted-foreground">
-            1 Procurement • 2 In-Progress • 2 Inspection
-          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            In Design & Site Execution
+          </p>
         </div>
 
-        {/* Card 3: Technical Deliverables */}
-        <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">Sector Deliverables</span>
+        {/* Card 3 */}
+        <div className="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+            <span>Technical Vault</span>
             <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
           </div>
-          <div className="mt-2 text-xl font-bold text-foreground font-mono">
-            {currentFiles.length} Approved Files
+          <div className="mt-2 text-2xl font-bold text-foreground">
+            {currentFiles.length} Certified Files
           </div>
-          <div className="mt-1 text-[11px] text-muted-foreground">
-            Vault tailored for {currentIndustryMeta.badge}
-          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            GFC Drawings & BOQ Schedules
+          </p>
         </div>
 
-        {/* Card 4: Team & Contractor Seats */}
-        <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">Provisioned Seats</span>
-            <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+        {/* Card 4 */}
+        <div className="p-4 rounded-xl border border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+            <span>Team & Access</span>
+            <Users className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
-          <div className="mt-2 text-xl font-bold text-foreground">
+          <div className="mt-2 text-2xl font-bold text-foreground">
             9 Members
           </div>
-          <div className="mt-1 text-[11px] text-muted-foreground">
-            Role-scoped access enabled
-          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Role-Scoped Permissions
+          </p>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* SECTOR SPECIFIC FILE VAULT & DELIVERABLES (Requested by User)   */}
+      {/* 3. MAIN DASHBOARD CONTENT: PROJECTS + SIDE ACTIONS             */}
       {/* ============================================================== */}
-      <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                {getIndustryIcon(currentIndustry)}
-              </div>
-              <h2 className="text-base font-bold text-foreground">
-                {currentIndustryMeta.label} — Project Technical Vault
-              </h2>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {currentIndustryMeta.description}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono font-medium px-2 py-1 rounded bg-muted text-muted-foreground">
-              {currentFiles.length} Certified Files
-            </span>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider font-mono border-b border-border">
-              <tr>
-                <th className="px-5 py-3 font-semibold">Document / Technical File</th>
-                <th className="px-4 py-3 font-semibold">File Code</th>
-                <th className="px-4 py-3 font-semibold">Technical Category</th>
-                <th className="px-4 py-3 font-semibold">Format & Size</th>
-                <th className="px-4 py-3 font-semibold">Milestone Stage</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {currentFiles.map((doc) => (
-                <tr key={doc.id} className="hover:bg-accent/30 transition">
-                  <td className="px-5 py-3.5 font-medium">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                        <FileCode className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-foreground font-semibold truncate">{doc.name}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          Authored by {doc.author} • {doc.date}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-3.5 font-mono text-foreground font-bold">
-                    {doc.code}
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-muted text-foreground font-medium">
-                      {doc.category}
-                    </span>
-                  </td>
-
-                  <td className="px-4 py-3.5 text-muted-foreground font-mono text-[11px]">
-                    {doc.fileType} ({doc.size})
-                  </td>
-
-                  <td className="px-4 py-3.5 text-foreground font-medium">
-                    {doc.stage}
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                        doc.status === "Approved"
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                          : doc.status === "Issued"
-                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                      }`}
-                    >
-                      <CheckCircle2 className="w-3 h-3" />
-                      {doc.status}
-                    </span>
-                  </td>
-
-                  <td className="px-5 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        title="Download file"
-                        className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Main Content Grid: Active Projects & AI Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Active Projects Pipeline (2 cols) */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
+        {/* Left Column: Active Projects (2 Cols) */}
+        <div className="lg:col-span-2 p-5 rounded-xl border border-border bg-card shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div>
-              <h2 className="text-base font-bold text-foreground">
-                Active Projects & Milestones
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Tracking on-site checkpoints, procurement, and progress
-              </p>
+              <h2 className="text-sm font-bold text-foreground">Active Projects</h2>
+              <p className="text-xs text-muted-foreground">Recent sites and milestone progression</p>
             </div>
-            <Link
-              href="/projects"
-              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-            >
-              <span>Full Pipeline</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+
+            <div className="flex items-center gap-3">
+              <div className="relative w-48 sm:w-56">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search project..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-muted/40 border border-border rounded-md pl-7 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <Link
+                href="/projects"
+                className="text-xs font-semibold text-primary hover:underline shrink-0"
+              >
+                View all
+              </Link>
+            </div>
           </div>
 
           <div className="divide-y divide-border">
-            {initialProjects.slice(0, 4).map((p) => (
+            {filteredProjects.map((p) => (
               <div
                 key={p.id}
-                className="py-3 flex items-center justify-between gap-4 group"
+                className="py-3 flex items-center justify-between gap-3 group hover:bg-muted/20 px-2 rounded-lg transition"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-foreground">
+                    <span className="font-mono text-xs font-semibold text-foreground">
                       {p.code}
                     </span>
                     <Link
-                      href={`/projects/${p.code}`}
-                      className="text-xs font-semibold text-foreground group-hover:underline truncate"
+                      href="/projects"
+                      className="text-xs font-bold text-foreground group-hover:text-primary transition truncate"
                     >
                       {p.name}
                     </Link>
-                    <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-semibold">
                       {p.stage}
                     </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {p.clientName} • {p.city} • Target: {p.targetHandover}
+                    {p.clientName} • {p.city}
                   </p>
                 </div>
 
@@ -375,14 +299,14 @@ export default function DashboardOverview() {
                       {formatCurrency(p.budget)}
                     </span>
                     <span className="text-[10px] text-muted-foreground font-mono">
-                      {p.progressPercent}% completed
+                      {p.progressPercent}% done
                     </span>
                   </div>
                   <Link
-                    href={`/projects/${p.code}`}
-                    className="px-2.5 py-1 rounded border border-border text-xs font-medium text-foreground hover:bg-accent transition"
+                    href="/projects"
+                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition"
                   >
-                    Open
+                    <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
@@ -390,80 +314,79 @@ export default function DashboardOverview() {
           </div>
         </div>
 
-        {/* Right Column: Intelligent Site Alerts & Payment Requests */}
-        <div className="space-y-4">
-          {/* Proactive Sector Alerts */}
-          <div className="bg-card border border-border rounded-xl p-5 shadow-xs">
-            <div className="flex items-center gap-2 pb-3 border-b border-border mb-3">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <h3 className="text-xs font-bold text-foreground">
-                Proactive Operational Alerts
-              </h3>
-            </div>
+        {/* Right Column: Quick Actions & Disbursements */}
+        <div className="space-y-6">
+          {/* Quick Actions Card */}
+          <div className="p-5 rounded-xl border border-border bg-card shadow-xs space-y-3">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono">
+              Quick Shortcuts
+            </h3>
+            <div className="space-y-1.5">
+              <Link
+                href="/quotes"
+                className="flex items-center justify-between p-2.5 rounded-lg border border-border hover:bg-accent transition text-xs group"
+              >
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-medium text-foreground">New BOQ Estimate</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition" />
+              </Link>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-lg bg-muted/40 border border-border">
-                <p className="font-semibold text-foreground text-xs">
-                  {currentIndustry === "SOLAR_EPC"
-                    ? "DISCOM Net Metering CEIG NOC Ready"
-                    : currentIndustry === "MODULAR_FURNITURE"
-                    ? "CNC Edge-banding Tape Batch Dispatched"
-                    : currentIndustry === "CIVIL_CONSTRUCTION"
-                    ? "Concrete Cube Strength Audit Due (Day 28)"
-                    : "P-619: Daikin VRV Inspection Ready"}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  {currentIndustry === "SOLAR_EPC"
-                    ? "Sanction approved by state distribution company. Ready for bidirectional meter installation."
-                    : currentIndustry === "MODULAR_FURNITURE"
-                    ? "2mm PUR moisture-cure tape batch passed QA. Factory floor operator notified."
-                    : currentIndustry === "CIVIL_CONSTRUCTION"
-                    ? "M35 concrete test results certified by NABL laboratory. Ready for upper floor slab staging."
-                    : "Pressure testing required before false ceiling board fastening. Delay risks slipping handover."}
-                </p>
-              </div>
+              <Link
+                href="/materials"
+                className="flex items-center justify-between p-2.5 rounded-lg border border-border hover:bg-accent transition text-xs group"
+              >
+                <div className="flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-medium text-foreground">Materials Master</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition" />
+              </Link>
 
-              <div className="p-3 rounded-lg bg-muted/40 border border-border">
-                <p className="font-semibold text-foreground text-xs">
-                  Milestone Sign-off Digital Approval
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  Client authenticated drawing revisions via secure client link. Ready for one-click contractor dispatch.
-                </p>
-              </div>
+              <Link
+                href="/team"
+                className="flex items-center justify-between p-2.5 rounded-lg border border-border hover:bg-accent transition text-xs group"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-medium text-foreground">Team & Access</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition" />
+              </Link>
             </div>
           </div>
 
-          {/* Pending Payment Requests */}
-          <div className="bg-card border border-border rounded-xl p-5 shadow-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-border mb-3">
-              <h3 className="text-xs font-bold text-foreground">
-                Site Payment Disbursements
+          {/* Pending Vendor Disbursements */}
+          <div className="p-5 rounded-xl border border-border bg-card shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono">
+                Recent Disbursements
               </h3>
               <Link href="/payments" className="text-[11px] text-primary hover:underline">
                 View all
               </Link>
             </div>
 
-            <div className="space-y-2.5">
-              {mockPaymentRequests.map((pr) => (
+            <div className="space-y-2">
+              {mockPaymentRequests.slice(0, 3).map((pr) => (
                 <div
                   key={pr.id}
-                  className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-muted/20 text-xs"
+                  className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border text-xs"
                 >
                   <div>
                     <span className="font-mono font-bold text-foreground block">
                       {pr.projectCode}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {pr.requestedBy} • {pr.category}
+                    <span className="text-[10px] text-muted-foreground">
+                      {pr.requestedBy}
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono font-semibold text-foreground block">
                       {formatCurrency(pr.amount)}
                     </span>
-                    <span className="text-[10px] uppercase font-mono px-1 rounded bg-muted text-muted-foreground">
+                    <span className="text-[9px] uppercase font-mono px-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold">
                       {pr.status}
                     </span>
                   </div>
@@ -473,6 +396,67 @@ export default function DashboardOverview() {
           </div>
         </div>
       </div>
+
+      {/* ============================================================== */}
+      {/* 4. CLEAN TECHNICAL VAULT LIST                                  */}
+      {/* ============================================================== */}
+      <div className="p-5 rounded-xl border border-border bg-card shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
+          <div>
+            <h2 className="text-sm font-bold text-foreground">
+              {currentIndustryMeta.label} — Technical Files & Standards
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Essential technical drawing sets and specifications for your practice
+            </p>
+          </div>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
+            {currentFiles.length} Certified
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {currentFiles.map((doc) => (
+            <div
+              key={doc.id}
+              className="p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition flex flex-col justify-between space-y-2"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-mono text-[10px] font-bold text-primary">
+                    {doc.code}
+                  </span>
+                  <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    {doc.status}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-foreground line-clamp-1">{doc.name}</p>
+                <p className="text-[10px] text-muted-foreground">{doc.fileType} • {doc.size}</p>
+              </div>
+
+              <div className="pt-2 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{doc.stage}</span>
+                <button
+                  title="Download"
+                  className="p-1 rounded hover:bg-accent text-foreground transition cursor-pointer"
+                >
+                  <Download className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* New Project Modal */}
+      <NewProjectModal
+        isOpen={isNewProjectModalOpen}
+        onClose={() => setIsNewProjectModalOpen(false)}
+        onAddProject={(newProj) => {
+          setProjects((prev) => [newProj, ...prev]);
+          setIsNewProjectModalOpen(false);
+        }}
+      />
     </div>
   );
 }
