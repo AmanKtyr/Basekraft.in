@@ -316,24 +316,24 @@ export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
           <div className="flex justify-center py-1">
             <Link
               href="/settings"
-              title={`${user.name} (${user.roleTitle})`}
+              title={`${user?.name || "User"} (${user?.roleTitle || ""})`}
               className="w-9 h-9 rounded-full bg-primary/10 border border-border text-foreground flex items-center justify-center font-bold text-xs hover:ring-2 hover:ring-ring transition"
             >
-              {user.avatar || user.name.slice(0, 2).toUpperCase()}
+              {user?.avatar || (user?.name ? user.name.slice(0, 2).toUpperCase() : "BK")}
             </Link>
           </div>
         ) : (
           <div className="flex items-center justify-between p-2 rounded-lg hover:bg-sidebar-accent transition">
             <Link href="/settings" onClick={onClose} className="flex items-center gap-2.5 min-w-0 flex-1">
               <div className="w-8 h-8 rounded-full bg-primary/10 border border-border text-foreground flex items-center justify-center font-bold text-xs shrink-0">
-                {user.avatar || user.name.slice(0, 2).toUpperCase()}
+                {user?.avatar || (user?.name ? user.name.slice(0, 2).toUpperCase() : "BK")}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-sidebar-foreground truncate leading-tight">
-                  {user.name}
+                  {user?.name || "User"}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate font-mono">
-                  {user.email}
+                  {user?.email || ""}
                 </p>
               </div>
             </Link>

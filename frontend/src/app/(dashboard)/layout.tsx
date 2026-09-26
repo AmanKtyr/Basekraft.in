@@ -61,14 +61,18 @@ function DashboardLayoutContent({
   );
 }
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </SidebarProvider>
+    <AuthGuard allowedRoles={["studio_admin", "architect", "contractor", "superadmin"]}>
+      <SidebarProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </SidebarProvider>
+    </AuthGuard>
   );
 }

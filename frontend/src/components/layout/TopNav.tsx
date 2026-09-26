@@ -326,15 +326,15 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent transition cursor-pointer"
             >
               <div className="w-7 h-7 rounded-full bg-primary/10 border border-border text-foreground font-bold text-xs flex items-center justify-center shrink-0">
-                {user.avatar || user.name.slice(0, 2).toUpperCase()}
+                {user?.avatar || (user?.name ? user.name.slice(0, 2).toUpperCase() : "BK")}
               </div>
 
               <div className="hidden md:block text-left">
                 <div className="text-xs font-semibold text-foreground leading-tight">
-                  {user.name}
+                  {user?.name || "User"}
                 </div>
                 <div className="text-[10px] text-muted-foreground leading-tight font-mono">
-                  {user.roleTitle}
+                  {user?.roleTitle || ""}
                 </div>
               </div>
 
@@ -345,11 +345,11 @@ export function TopNav({ onOpenNewProject, onToggleMobileMenu }: TopNavProps) {
             {isUserMenuOpen && (
               <div className="absolute right-0 top-11 w-64 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in-50 zoom-in-95 duration-100 text-xs">
                 <div className="px-3.5 py-2.5 border-b border-border">
-                  <div className="font-semibold text-foreground text-xs">{user.name}</div>
-                  <div className="text-[11px] text-muted-foreground font-mono">{user.email}</div>
+                  <div className="font-semibold text-foreground text-xs">{user?.name || "User"}</div>
+                  <div className="text-[11px] text-muted-foreground font-mono">{user?.email || ""}</div>
                   <div className="mt-1.5">
                     <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border font-semibold">
-                      {user.roleTitle}
+                      {user?.roleTitle || ""}
                     </span>
                   </div>
                 </div>

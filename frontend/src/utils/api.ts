@@ -373,40 +373,39 @@ export function clearAuthTokens() {
 }
 
 /**
- * Automatically acquire a valid JWT session for standard operations if not logged in
+ * Automatically refresh tokens if access token expired
  */
-export async function ensureAuthToken(): Promise<string | null> {
-  const existing = getAuthToken();
-  if (existing) return existing;
-
-  if (typeof window === 'undefined') return null;
+export async function refreshAuthToken(): Promise<string | null> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken || typeof window === 'undefined') return null;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/auth/login/`, {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@basekraft.in', password: 'StudioAdmin@123' }),
+      body: JSON.stringify({ refresh: refreshToken }),
     });
     if (res.ok) {
       const data = await res.json();
       if (data.access) {
-        setAuthTokens(data.access, data.refresh);
+        localStorage.setItem('basekraft_access_token', data.access);
         return data.access;
       }
     }
   } catch (err) {
-    console.warn('Auto auth token acquisition failed:', err);
+    console.warn('JWT Refresh failed:', err);
+  }
+
+  // Refresh token is expired or invalid
+  clearAuthTokens();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('basekraft:session-expired'));
   }
   return null;
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   let token = getAuthToken();
-
-  // If calling a protected endpoint without an existing token, ensure one first
-  if (!token && !endpoint.includes('/auth/')) {
-    token = await ensureAuthToken();
-  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -418,52 +417,41 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const url = `${API_BASE_URL}${endpoint}`;
-  let response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new Error(
+      `Unable to reach Basekraft API at ${API_BASE_URL}. Please ensure the backend server is running.`
+    );
+  }
 
-  // If 401 Unauthorized, automatically refresh or re-authenticate and retry once
-  if (response.status === 401 && !endpoint.includes('/auth/')) {
-    const refreshToken = getRefreshToken();
-    let refreshed = false;
-
-    if (refreshToken) {
+  // If 401 Unauthorized, automatically refresh and retry once
+  if (
+    response.status === 401 &&
+    !endpoint.includes('/auth/login') &&
+    !endpoint.includes('/auth/refresh')
+  ) {
+    const newToken = await refreshAuthToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
       try {
-        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh: refreshToken }),
+        response = await fetch(url, {
+          ...options,
+          headers,
         });
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
-          if (refreshData.access) {
-            token = refreshData.access;
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('basekraft_access_token', token);
-            }
-            headers['Authorization'] = `Bearer ${token}`;
-            refreshed = true;
-          }
-        }
       } catch {
-        // silent refresh failure
+        throw new Error('Connection failed after token refresh');
       }
-    }
-
-    if (!refreshed) {
-      const newToken = await ensureAuthToken();
-      if (newToken) {
-        headers['Authorization'] = `Bearer ${newToken}`;
-        refreshed = true;
+    } else {
+      clearAuthTokens();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('basekraft:session-expired'));
       }
-    }
-
-    if (refreshed) {
-      response = await fetch(url, {
-        ...options,
-        headers,
-      });
+      throw new Error('Session expired. Please log in again.');
     }
   }
 
@@ -477,8 +465,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     const errorMsg =
       data.detail ||
       data.message ||
-      (typeof data === 'object' ? JSON.stringify(data) : 'Network request failed');
-    throw new Error(errorMsg);
+      (typeof data === 'object' ? Object.values(data).flat().join(', ') : 'Network request failed');
+    throw new Error(errorMsg || 'Request failed');
   }
 
   return data as T;
@@ -495,8 +483,19 @@ export const authApi = {
     return data;
   },
 
+  refresh: async (refreshToken: string) => {
+    return request<{ access: string }>('/auth/refresh/', {
+      method: 'POST',
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+  },
+
   getMe: async () => {
     return request<ApiUser>('/auth/me/');
+  },
+
+  logout: () => {
+    clearAuthTokens();
   },
 };
 

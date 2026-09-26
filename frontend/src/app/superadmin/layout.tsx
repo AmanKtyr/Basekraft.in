@@ -24,8 +24,21 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export default function SuperAdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthGuard allowedRoles={["superadmin"]}>
+      <SuperAdminLayoutContent>{children}</SuperAdminLayoutContent>
+    </AuthGuard>
+  );
+}
+
+function SuperAdminLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -202,14 +215,14 @@ export default function SuperAdminLayout({
           <div className="p-2 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
-                {user.avatar || "PS"}
+                {user?.avatar || "PS"}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-foreground truncate">
-                  {user.name || "Platform Superadmin"}
+                  {user?.name || "Platform Superadmin"}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate font-mono">
-                  {user.email}
+                  {user?.email || ""}
                 </p>
               </div>
             </div>
@@ -283,7 +296,7 @@ export default function SuperAdminLayout({
               </Link>
             ))}
             <div className="pt-2 border-t border-border flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">{user.email}</span>
+              <span className="text-xs text-muted-foreground">{user?.email || ""}</span>
               <button
                 onClick={logout}
                 className="text-xs text-destructive flex items-center gap-1"

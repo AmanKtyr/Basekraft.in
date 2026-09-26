@@ -36,7 +36,7 @@ import {
 
 export default function DashboardOverview() {
   const { user, role, industry, setIndustry } = useAuth();
-  const currentIndustry = user.industry || industry || "INTERIOR_DESIGN";
+  const currentIndustry = user?.industry || industry || "INTERIOR_DESIGN";
   const [stats, setStats] = useState<DashboardStatsData | null>(null);
 
   useEffect(() => {
@@ -79,14 +79,14 @@ export default function DashboardOverview() {
         <div>
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold">
-              {user.roleTitle || "Company Lead"}
+              {user?.roleTitle || "Company Lead"}
             </span>
             <span className="text-xs text-muted-foreground font-mono">
-              • {user.studioName || "Basekraft Enterprise"}
+              • {user?.studioName || "Basekraft Enterprise"}
             </span>
-            {(user.orgCode || stats?.company?.org_code) && (
+            {(user?.orgCode || stats?.company?.org_code) && (
               <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                Org ID: {user.orgCode || stats?.company?.org_code}
+                Org ID: {user?.orgCode || stats?.company?.org_code}
               </span>
             )}
             <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">

@@ -224,7 +224,7 @@ export default function TeamPage() {
 
 
   const handleCopyOrgCode = () => {
-    const code = user?.orgCode || user?.company_details?.org_code || "ORG-BK-9182";
+    const code = user?.orgCode || "ORG-BK-9182";
     navigator.clipboard.writeText(code);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);

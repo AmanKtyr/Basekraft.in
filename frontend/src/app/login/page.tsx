@@ -22,12 +22,12 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 
-import { useAuth, UserRole, DEMO_PROFILES } from "@/context/AuthContext";
+import { useAuth, UserRole } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, quickLogin } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, login, quickLogin } = useAuth();
   const { resolvedTheme, toggleTheme } = useTheme();
 
   const [email, setEmail] = useState("admin@basekraft.in");
@@ -37,6 +37,19 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      if (user.role === "superadmin") {
+        router.replace("/superadmin");
+      } else if (user.role === "contractor") {
+        router.replace("/orders");
+      } else {
+        router.replace("/dashboard");
+      }
+    }
+  }, [authLoading, isAuthenticated, user, router]);
 
   const roleOptions: {
     role: UserRole;
@@ -97,7 +110,11 @@ export default function LoginPage() {
     try {
       await login(email, password, selectedRole);
     } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : "Authentication failed");
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Authentication failed. Please verify your credentials or server status."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -112,17 +129,25 @@ export default function LoginPage() {
     }
   };
 
-  const handleOneClickLogin = (role: UserRole) => {
+  const handleOneClickLogin = async (role: UserRole) => {
     setIsLoading(true);
+    setErrorMessage("");
     const opt = roleOptions.find((o) => o.role === role);
-    setTimeout(() => {
+    try {
       if (opt) {
-        login(opt.email, opt.defaultPassword, role);
+        await login(opt.email, opt.defaultPassword, role);
       } else {
-        quickLogin(role);
+        await quickLogin(role);
       }
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Authentication failed. Check your network or credentials."
+      );
+    } finally {
       setIsLoading(false);
-    }, 250);
+    }
   };
 
   return (

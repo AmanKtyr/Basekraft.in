@@ -47,6 +47,8 @@ function ProjectsContent() {
           pendingIssuesCount: 1,
           description: `Turnkey commercial project for ${bp.client_name}`,
           propertyType: "Luxury Villa",
+          carpetAreaSqFt: 3500,
+          checkpoints: [],
         }));
 
         setProjects((prev) => {

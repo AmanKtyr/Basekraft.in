@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authApi, clearAuthTokens, setAuthTokens, ensureAuthToken, getAuthToken, IndustryType } from "@/utils/api";
+import { authApi, clearAuthTokens, getAuthToken, IndustryType, ApiUser } from "@/utils/api";
 
 export type UserRole =
   | "superadmin"
@@ -105,66 +105,77 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
   },
 };
 
+export const mapBackendRole = (role: string): UserRole => {
+  switch (role?.toUpperCase()) {
+    case "SUPERADMIN":
+      return "superadmin";
+    case "COMPANY_ADMIN":
+      return "studio_admin";
+    case "ARCHITECT":
+    case "PROJECT_MANAGER":
+    case "SITE_ENGINEER":
+    case "SALES_LEAD":
+      return "architect";
+    case "CONTRACTOR":
+      return "contractor";
+    default:
+      return "studio_admin";
+  }
+};
+
+export const mapApiUserToProfile = (apiUser: ApiUser): UserProfile => {
+  const mappedRole = mapBackendRole(apiUser.role);
+  return {
+    id: apiUser.id,
+    name: apiUser.full_name || `${apiUser.first_name || ""} ${apiUser.last_name || ""}`.trim() || apiUser.email,
+    email: apiUser.email,
+    role: mappedRole,
+    roleTitle: apiUser.role_title || (mappedRole === "superadmin" ? "Platform Superadmin" : "Company Member"),
+    studioName: apiUser.company_details?.name || "Basekraft Enterprise",
+    orgCode: apiUser.company_details?.org_code || undefined,
+    department: apiUser.department || "PROJECTS",
+    canManageLeads: apiUser.can_manage_leads ?? true,
+    canManageProjects: apiUser.can_manage_projects ?? true,
+    canViewFinances: apiUser.can_view_finances ?? false,
+    canApproveOrders: apiUser.can_approve_orders ?? false,
+    avatar: apiUser.avatar_initials || (apiUser.full_name ? apiUser.full_name.slice(0, 2).toUpperCase() : "BK"),
+    tenantId: apiUser.company || undefined,
+    industry: (apiUser.company_details?.industry as IndustryType) || "INTERIOR_DESIGN",
+    industryDisplay: apiUser.company_details?.industry_display || "Interior Design & Turnkey Fit-out",
+  };
+};
+
 interface AuthContextType {
-  user: UserProfile;
-  role: UserRole;
+  user: UserProfile | null;
+  role: UserRole | null;
   industry: IndustryType;
   isAuthenticated: boolean;
-  login: (email: string, password?: string, role?: UserRole) => Promise<boolean>;
-  quickLogin: (role: UserRole) => void;
+  isLoading: boolean;
+  login: (email: string, password?: string, targetRole?: UserRole) => Promise<boolean>;
+  quickLogin: (role: UserRole) => Promise<boolean>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
   setIndustry: (industry: IndustryType) => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile>(DEMO_PROFILES.studio_admin);
-  const [isMounted, setIsMounted] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setIsMounted(true);
+  const persistUser = (nextUser: UserProfile | null) => {
+    setUser(nextUser);
     try {
-      const saved = localStorage.getItem("basekraft_auth_user");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed?.role && DEMO_PROFILES[parsed.role as UserRole]) {
-          setUser(parsed);
-        }
+      if (nextUser) {
+        localStorage.setItem("basekraft_auth_user", JSON.stringify(nextUser));
+      } else {
+        localStorage.removeItem("basekraft_auth_user");
       }
     } catch {
       // ignore storage errors
-    }
-
-    // Ensure client has active DRF JWT authentication tokens
-    if (!getAuthToken()) {
-      ensureAuthToken().catch(() => {});
-    }
-  }, []);
-
-  const persistUser = (nextUser: UserProfile) => {
-    setUser(nextUser);
-    try {
-      localStorage.setItem("basekraft_auth_user", JSON.stringify(nextUser));
-    } catch {
-      // ignore
-    }
-  };
-
-  const mapBackendRole = (role: string): UserRole => {
-    switch (role?.toUpperCase()) {
-      case "SUPERADMIN":
-        return "superadmin";
-      case "COMPANY_ADMIN":
-        return "studio_admin";
-      case "ARCHITECT":
-        return "architect";
-      case "CONTRACTOR":
-        return "contractor";
-      default:
-        return "studio_admin";
     }
   };
 
@@ -178,66 +189,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (email: string, password?: string, targetRole?: UserRole): Promise<boolean> => {
-    // 1. Try real DRF backend authentication first if password is provided
-    if (password && password !== "••••••••••••") {
-      try {
-        const res = await authApi.login(email, password);
-        const mappedRole = mapBackendRole(res.user.role);
-        const userProfile: UserProfile = {
-          id: res.user.id,
-          name: res.user.full_name || res.user.email,
-          email: res.user.email,
-          role: mappedRole,
-          roleTitle: res.user.role_title || "Company Member",
-          studioName: res.user.company_details?.name || "Basekraft Enterprise",
-          orgCode: res.user.company_details?.org_code || undefined,
-          department: res.user.department || "PROJECTS",
-          canManageLeads: res.user.can_manage_leads ?? true,
-          canManageProjects: res.user.can_manage_projects ?? true,
-          canViewFinances: res.user.can_view_finances ?? false,
-          canApproveOrders: res.user.can_approve_orders ?? false,
-          avatar: res.user.avatar_initials || "BK",
-          tenantId: res.user.company || undefined,
-          industry: (res.user.company_details?.industry as IndustryType) || "INTERIOR_DESIGN",
-          industryDisplay: res.user.company_details?.industry_display || "Interior Design & Turnkey Fit-out",
-        };
+  const refreshProfile = async () => {
+    const token = getAuthToken();
+    if (!token) {
+      setUser(null);
+      return;
+    }
+    try {
+      const apiUser = await authApi.getMe();
+      const profile = mapApiUserToProfile(apiUser);
+      persistUser(profile);
+    } catch (err) {
+      console.warn("Failed to refresh user profile:", err);
+    }
+  };
 
-        persistUser(userProfile);
-        navigateByRole(mappedRole);
-        return true;
-      } catch (err: unknown) {
-        console.warn("Backend auth failed, evaluating demo match:", err);
+  useEffect(() => {
+    const token = getAuthToken();
+    const saved = typeof window !== "undefined" ? localStorage.getItem("basekraft_auth_user") : null;
+
+    // Optimistically restore cached profile if token is present
+    if (token && saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed?.id && parsed?.email) {
+          setUser(parsed);
+        }
+      } catch {
+        // ignore parse error
       }
     }
 
-    // 2. Demo fallback
-    const matchedRole =
-      targetRole ||
-      (Object.keys(DEMO_PROFILES).find(
-        (k) => DEMO_PROFILES[k as UserRole].email.toLowerCase() === email.toLowerCase()
-      ) as UserRole) ||
-      "studio_admin";
+    if (!token) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
 
-    const profile = DEMO_PROFILES[matchedRole];
-    persistUser(profile);
-    navigateByRole(matchedRole);
+    // Validate token against backend /auth/me/
+    authApi
+      .getMe()
+      .then((apiUser) => {
+        const profile = mapApiUserToProfile(apiUser);
+        persistUser(profile);
+      })
+      .catch((err) => {
+        console.warn("Session verification failed:", err);
+        clearAuthTokens();
+        setUser(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+
+    const handleSessionExpired = () => {
+      clearAuthTokens();
+      setUser(null);
+      router.push("/login?reason=session_expired");
+    };
+
+    window.addEventListener("basekraft:session-expired", handleSessionExpired);
+    return () => {
+      window.removeEventListener("basekraft:session-expired", handleSessionExpired);
+    };
+  }, [router]);
+
+  const login = async (email: string, password?: string, targetRole?: UserRole): Promise<boolean> => {
+    if (!email || !password) {
+      throw new Error("Please enter both email and password.");
+    }
+
+    const res = await authApi.login(email.trim(), password);
+    const mappedRole = targetRole || mapBackendRole(res.user.role);
+    const userProfile = mapApiUserToProfile(res.user);
+
+    persistUser(userProfile);
+    navigateByRole(mappedRole);
     return true;
   };
 
-  const quickLogin = (role: UserRole) => {
-    const profile = DEMO_PROFILES[role];
-    persistUser(profile);
-    navigateByRole(role);
+  const quickLogin = async (role: UserRole): Promise<boolean> => {
+    const demoCredentials: Record<UserRole, { email: string; pass: string }> = {
+      superadmin: { email: "superadmin@basekraft.in", pass: "SuperAdmin@123" },
+      studio_admin: { email: "admin@basekraft.in", pass: "StudioAdmin@123" },
+      architect: { email: "riya.kapoor@basekraft.in", pass: "Architect@123" },
+      contractor: { email: "vikram.mep@apexbuild.com", pass: "Contractor@123" },
+    };
+
+    const cred = demoCredentials[role];
+    if (cred) {
+      return login(cred.email, cred.pass, role);
+    }
+    return false;
   };
 
   const switchRole = (newRole: UserRole) => {
-    const profile = DEMO_PROFILES[newRole];
-    persistUser(profile);
+    if (!user) return;
+    const updated = { ...user, role: newRole };
+    persistUser(updated);
     navigateByRole(newRole);
   };
 
   const setIndustry = (newIndustry: IndustryType) => {
+    if (!user) return;
     const industryLabels: Record<IndustryType, string> = {
       INTERIOR_DESIGN: "Interior Design & Turnkey Fit-out",
       SOLAR_EPC: "Solar Energy & Rooftop EPC",
@@ -254,22 +308,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     clearAuthTokens();
-    setUser(DEMO_PROFILES.studio_admin);
+    setUser(null);
     router.push("/login");
   };
+
+  const role = user?.role || null;
+  const isAuthenticated = Boolean(user && getAuthToken());
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        role: user.role,
-        industry: user.industry || "INTERIOR_DESIGN",
-        isAuthenticated: true,
+        role,
+        industry: user?.industry || "INTERIOR_DESIGN",
+        isAuthenticated,
+        isLoading,
         login,
         quickLogin,
         logout,
         switchRole,
         setIndustry,
+        refreshProfile,
       }}
     >
       {children}
